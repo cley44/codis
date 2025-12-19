@@ -2,6 +2,8 @@ package handlerAPIAuth
 
 import (
 	"codis/domain/auth"
+	"codis/utils"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,15 +26,14 @@ func (svc *AuthAPIController) GetProfile(ctx *gin.Context) {
 
 	userID, exist := ctx.Get("user_id")
 	if !exist {
-		ctx.AbortWithStatusJSON(
-			http.StatusUnauthorized,
-			gin.H{"error": "authentificaton required"},
-		)
+		utils.AbortRequest(ctx, http.StatusUnauthorized, errors.New("Unauthorized"), "Unauthorized")
+		return
 	}
 
 	user, err := svc.sessionService.GetCurrentUser(userID.(string))
 	if err != nil {
-		panic(err)
+		utils.AbortRequest(ctx, http.StatusUnauthorized, err, "Unauthorized")
+		return
 	}
 
 	ctx.JSON(200, user)

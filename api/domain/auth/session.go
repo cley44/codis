@@ -48,7 +48,7 @@ func (svc SessionService) InitSessionMiddleware() gin.HandlerFunc {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	return sessions.Sessions("mysession", svc.Store)
+	return sessions.Sessions("codis_session", svc.Store)
 }
 
 func (svc SessionService) GetCurrentUser(userID string) (models.User, error) {

@@ -41,6 +41,8 @@ func (svc *HTTPAppService) ListenAndServe() {
 		AllowCredentials: true, // 🔴 REQUIRED
 	}))
 
+	// Logger middleware
+	svc.router.Use(middleware.LoggerMiddleware())
 	// Recover middleware
 	svc.router.Use(middleware.GinOopsRecovery())
 

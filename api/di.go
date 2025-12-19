@@ -7,6 +7,7 @@ import (
 	"codis/handlers"
 	handlerAPIAuth "codis/handlers/auth"
 	handlerAPIDiscord "codis/handlers/discord"
+	"codis/instrumentation"
 	"codis/repository"
 
 	"github.com/samber/do/v2"
@@ -47,10 +48,16 @@ func RegisterApp(injector do.Injector) {
 	do.Provide(injector, NewHTTPAppService)
 }
 
+func RegisterInstrumentation(injector do.Injector) {
+	do.Provide(injector, instrumentation.NewLoggerService)
+}
+
 func RegisterAll() *do.RootScope {
 	injector := do.New()
 
 	RegisterBase(injector)
+
+	RegisterInstrumentation(injector)
 
 	RegisterAPI(injector)
 

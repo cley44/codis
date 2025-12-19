@@ -6,9 +6,10 @@ import (
 )
 
 type ConfigService struct {
-	Discord  DiscordConfig
-	Postgres PostgresConfig
-	Auth     AuthConfig
+	Discord         DiscordConfig
+	Postgres        PostgresConfig
+	Auth            AuthConfig
+	Instrumentation InstrumentationConfig
 }
 
 func NewConfigService(injector do.Injector) (*ConfigService, error) {

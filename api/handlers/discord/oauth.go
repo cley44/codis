@@ -2,6 +2,7 @@ package handlerAPIDiscord
 
 import (
 	"codis/utils"
+	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -18,19 +19,19 @@ func (svc *DiscordAPIController) HandleDiscordInviteLink(ctx *gin.Context) {
 func (svc *DiscordAPIController) HandleDiscordCallback(ctx *gin.Context) {
 	var body DiscordCallbackRequest
 	if err := ctx.BindJSON(&body); err != nil {
-		panic(err)
+		utils.AbortRequest(ctx, http.StatusBadRequest, err, "Bad request")
+		return
 	}
 
 	discordOauthSession := svc.discordService.StartSession(body.Code, body.State)
 
 	discordUser, err := svc.discordService.GetUser(discordOauthSession.Session)
 	if err != nil {
-		utils.PrintJSONIndent(err.Error())
-		//@TODO should be handled
-		panic(err.Error())
+		utils.AbortRequest(ctx, 500, err, "Failed to handle discord callback (0)")
+		return
 	}
 
-	user, err := svc.userRepository.Create(
+	user, err := svc.userRepository.CreateOrUpdate(
 		discordUser.Username,
 		discordUser.GlobalName,
 		discordUser.ID.String(),
@@ -38,8 +39,7 @@ func (svc *DiscordAPIController) HandleDiscordCallback(ctx *gin.Context) {
 		&discordOauthSession,
 		discordUser.Email)
 	if err != nil {
-		utils.PrintJSONIndent(err.Error())
-		ctx.JSON(200, "failed")
+		utils.AbortRequest(ctx, 500, err, "Failed to handle discord callback (1)")
 		return
 	}
 
@@ -48,7 +48,8 @@ func (svc *DiscordAPIController) HandleDiscordCallback(ctx *gin.Context) {
 	session.Set("user_id", user.ID.String())
 	err = session.Save()
 	if err != nil {
-		panic(err)
+		utils.AbortRequest(ctx, 500, err, "Failed to handle discord callback (2)")
+		return
 	}
 
 	ctx.JSON(200, user)

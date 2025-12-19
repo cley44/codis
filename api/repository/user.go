@@ -18,19 +18,29 @@ func NewUserRepository(injector do.Injector) (*UserRepository, error) {
 	return &u, nil
 }
 
-func (u UserRepository) Create(username string, displayUsername *string, discordID string, discordAvatar *string, discordSession *models.DiscordSession, email string) (user models.User, err error) {
+func (u UserRepository) CreateOrUpdate(username string, displayUsername *string, discordID string, discordAvatar *string, discordSession *models.DiscordSession, email string) (user models.User, err error) {
 
-	q := "INSERT INTO public.user (username, display_username, discord_id, discord_avatar, discord_session,email) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;"
+	q := `INSERT INTO public.user
+			(username, display_username, discord_id, discord_avatar, discord_session, email)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT ON CONSTRAINT user_discord_id_key
+		DO UPDATE SET
+			display_username = excluded.display_username,
+			discord_avatar = excluded.discord_avatar,
+			discord_session = excluded.discord_session,
+			email = excluded.email,
+			username = excluded.username
+		RETURNING *;`
 
-	err = u.postgresDatabaseService.Db.Get(&user, q, username, displayUsername, discordID, discordAvatar, discordSession, email)
+	err = u.postgresDatabaseService.Get(&user, q, username, displayUsername, discordID, discordAvatar, discordSession, email)
 
 	return user, err
 }
 
 func (u UserRepository) GetByID(ID string) (user models.User, err error) {
 
-	q := "SELECT * from public.user WHERE id = $1"
+	q := `SELECT * from public.user WHERE id = $1`
 
-	err = u.postgresDatabaseService.Db.Get(&user, q, ID)
+	err = u.postgresDatabaseService.Get(&user, q, ID)
 	return
 }

@@ -2,13 +2,14 @@ package repository
 
 import (
 	"codis/config"
-	"codis/utils"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/samber/do/v2"
 	"github.com/samber/lo"
+	"github.com/samber/oops"
 
 	// Do not remove: this line imports the driver.
 	_ "github.com/lib/pq"
@@ -34,8 +35,7 @@ func NewPostgresDatabaseService(injector do.Injector) (*PostgresDatabaseService,
 	db, err := sqlx.Open("postgres", uri)
 
 	if err != nil {
-		utils.PrintJSONIndent(err.Error())
-		panic("Failed to init db")
+		slog.Error("Failed to init DB", "error", oops.Wrap(err))
 	}
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
@@ -53,4 +53,9 @@ func NewPostgresDatabaseService(injector do.Injector) (*PostgresDatabaseService,
 	}
 
 	return &d, nil
+}
+
+func (svc PostgresDatabaseService) Get(dest interface{}, query string, args ...interface{}) error {
+	err := svc.Db.Get(dest, query, args...)
+	return oops.Wrap(err)
 }
