@@ -1,7 +1,8 @@
 package models
 
 import (
-	_ "ariga.io/atlas-provider-gorm/gormschema"
+	_ "codis/config"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )

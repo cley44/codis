@@ -2,7 +2,7 @@ package codis
 
 import (
 	"codis/config"
-	"codis/discord"
+	"codis/domain/discord"
 	"codis/handlers"
 	handlerAPIDiscord "codis/handlers/discord"
 	"codis/repository"
@@ -12,6 +12,12 @@ import (
 
 func RegisterDatabase(injector do.Injector) {
 	do.Provide(injector, repository.NewPostgresDatabaseService)
+
+	RegisterRepository(injector)
+}
+
+func RegisterRepository(injector do.Injector) {
+	do.Provide(injector, repository.NewUserRepository)
 }
 
 func RegisterControllers(injector do.Injector) {

@@ -20,5 +20,7 @@ func (svc *DiscordAPIControllersService) HandleDiscordCallback(ctx *gin.Context)
 
 	svc.discordService.StartSession(body.Code, body.State)
 
+	svc.userRepository.Create("test", "emial", "password")
+
 	// ctx.JSON(200, ctx.json)
 }
