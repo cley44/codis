@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"codis/models"
 	"codis/utils"
 
 	"github.com/disgoorg/disgo/discord"
@@ -12,7 +13,12 @@ func (svc *DiscordService) GetDiscordInviteLink() string {
 
 	params := oauth2.AuthorizationURLParams{
 		RedirectURI: svc.config.Discord.RedirectURI,
-		Scopes:      []discord.OAuth2Scope{discord.OAuth2ScopeBot, discord.OAuth2ScopeIdentify},
+		//discord.OAuth2ScopeBot,
+		Scopes: []discord.OAuth2Scope{
+			discord.OAuth2ScopeIdentify,
+			discord.OAuth2ScopeEmail,
+			discord.OAuth2ScopeGuilds,
+		},
 		Permissions: discord.PermissionAdministrator,
 	}
 
@@ -21,16 +27,21 @@ func (svc *DiscordService) GetDiscordInviteLink() string {
 	return authorizatonURL
 }
 
-func (svc *DiscordService) StartSession(code string, state string) {
+func (svc *DiscordService) StartSession(code string, state string) models.DiscordSession {
 	oauthSession, _, err := svc.oauthClient.StartSession(code, state)
 	if err != nil {
+		utils.PrintJSONIndent(err.Error())
 		//@TODO should be handled
-		panic("fuckl")
+		panic(err.Error())
 	}
 
-	oauthUser, err := svc.oauthClient.GetUser(oauthSession)
-	if err != nil {
-		panic("fuck 2")
+	discordSession := models.DiscordSession{
+		Session: oauthSession,
 	}
-	utils.PrintJSONIndent(oauthUser)
+
+	return discordSession
+}
+
+func (svc *DiscordService) GetUser(session oauth2.Session) (discordUser *discord.OAuth2User, err error) {
+	return svc.oauthClient.GetUser(session)
 }

@@ -1,19 +1,27 @@
 package handlers
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do/v2"
 
+	"codis/domain/auth"
+	authHandlers "codis/handlers/auth"
 	controllerDiscord "codis/handlers/discord"
+	"codis/utils"
 )
 
 type APIRouterService struct {
-	discordAPIControllersService *controllerDiscord.DiscordAPIControllersService
+	discordAPIController *controllerDiscord.DiscordAPIController
+	authAPIController    *authHandlers.AuthAPIController
+	sessionService       *auth.SessionService
 }
 
 func NewAPIRouterService(injector do.Injector) (*APIRouterService, error) {
 	m := APIRouterService{
-		discordAPIControllersService: do.MustInvoke[*controllerDiscord.DiscordAPIControllersService](injector),
+		discordAPIController: do.MustInvoke[*controllerDiscord.DiscordAPIController](injector),
+		sessionService:       do.MustInvoke[*auth.SessionService](injector),
+		authAPIController:    do.MustInvoke[*authHandlers.AuthAPIController](injector),
 	}
 
 	m.init()
@@ -25,16 +33,28 @@ func (svc *APIRouterService) init() {
 
 }
 
-func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine) {
+func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine, authRouter *gin.RouterGroup) {
 	discordAPI := router.Group("/discord")
 	{
-		discordAPI.GET("/invite_link", svc.discordAPIControllersService.HandleDiscordInviteLink)
-		discordAPI.POST("/callback", svc.discordAPIControllersService.HandleDiscordCallback)
+		discordAPI.GET("/invite_link", svc.discordAPIController.HandleDiscordInviteLink)
+		discordAPI.POST("/callback", svc.discordAPIController.HandleDiscordCallback)
+	}
+
+	{
+		authRouter.GET("/test", svc.authAPIController.GetProfile)
 	}
 }
 
 func (svc *APIRouterService) RegisterRoutes(router *gin.Engine) {
 	router.GET("/helloworld", func(ctx *gin.Context) {
-		println("test")
+
+		session := sessions.Default(ctx)
+
+		res := session.Get("user_id")
+
+		println(res)
+		utils.PrintJSONIndent(res)
+
+		ctx.JSON(200, res)
 	})
 }

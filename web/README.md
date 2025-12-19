@@ -46,3 +46,20 @@ pnpm build
 ```sh
 pnpm lint
 ```
+
+## Discord OAuth debug page
+
+To manually test the Discord backend routes from the frontend:
+
+- Start the Go API so it listens on `http://localhost:80`.
+- Start the Vue dev server:
+
+```sh
+pnpm dev
+```
+
+- Open the app in your browser and navigate to `/debug/discord-oauth`.
+- Use the buttons there to:
+  - Call `GET /discord/invite_link` and inspect the JSON response.
+  - Send a custom JSON body to `POST /discord/callback`.
+  - Inspect any `code`, `state`, or `error` query params present on the page URL.

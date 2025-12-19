@@ -2,8 +2,10 @@ package codis
 
 import (
 	"codis/config"
+	"codis/domain/auth"
 	"codis/domain/discord"
 	"codis/handlers"
+	handlerAPIAuth "codis/handlers/auth"
 	handlerAPIDiscord "codis/handlers/discord"
 	"codis/repository"
 
@@ -22,6 +24,7 @@ func RegisterRepository(injector do.Injector) {
 
 func RegisterControllers(injector do.Injector) {
 	do.Provide(injector, handlerAPIDiscord.NewDiscordAPIControllersService)
+	do.Provide(injector, handlerAPIAuth.NewAuthAPIController)
 }
 
 func RegisterBase(injector do.Injector) {
@@ -34,6 +37,8 @@ func RegisterDiscord(injector do.Injector) {
 
 func RegisterAPI(injector do.Injector) {
 	do.Provide(injector, handlers.NewAPIRouterService)
+
+	do.Provide(injector, auth.NewSessionService)
 
 	RegisterControllers(injector)
 }

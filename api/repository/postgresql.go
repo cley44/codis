@@ -2,46 +2,54 @@ package repository
 
 import (
 	"codis/config"
+	"codis/utils"
+	"fmt"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/samber/do/v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/samber/lo"
+
+	// Do not remove: this line imports the driver.
+	_ "github.com/lib/pq"
 )
 
 type PostgresDatabaseService struct {
 	config *config.ConfigService
-	db     *gorm.DB
+	Db     *sqlx.DB
 }
 
 func NewPostgresDatabaseService(injector do.Injector) (*PostgresDatabaseService, error) {
 	config := do.MustInvoke[*config.ConfigService](injector)
 
-	// https://github.com/go-gorm/postgres
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN:                  config.Postgres.URI,
-		PreferSimpleProtocol: true, // disables implicit prepared statement usage
-	}), &gorm.Config{})
+	uri := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=%s",
+		config.Postgres.Username,
+		config.Postgres.Password,
+		config.Postgres.Hostname,
+		config.Postgres.Port,
+		config.Postgres.Database,
+		lo.Ternary(config.Postgres.SSL, "require", "disable"),
+	)
+
+	db, err := sqlx.Open("postgres", uri)
+
 	if err != nil {
+		utils.PrintJSONIndent(err.Error())
 		panic("Failed to init db")
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		panic("sql db failed")
-	}
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	sqlDB.SetMaxIdleConns(10)
+	db.SetMaxIdleConns(10)
 
 	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	sqlDB.SetMaxOpenConns(100)
+	db.SetMaxOpenConns(100)
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxLifetime(time.Hour)
 
 	d := PostgresDatabaseService{
 		config: config,
-		db:     db,
+		Db:     db,
 	}
 
 	return &d, nil
