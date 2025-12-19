@@ -7,7 +7,7 @@ import (
 
 	"codis/domain/auth"
 	apiHandlers "codis/handlers"
-	authHandlers "codis/handlers/auth"
+	middleware "codis/handlers/middleware"
 )
 
 type HTTPAppService struct {
@@ -41,6 +41,9 @@ func (svc *HTTPAppService) ListenAndServe() {
 		AllowCredentials: true, // 🔴 REQUIRED
 	}))
 
+	// Recover middleware
+	svc.router.Use(middleware.GinOopsRecovery())
+
 	// Init sessions middleware
 	s := do.MustInvoke[*auth.SessionService](svc.injector)
 	svc.router.Use(s.InitSessionMiddleware())
@@ -48,7 +51,7 @@ func (svc *HTTPAppService) ListenAndServe() {
 	svc.apiRouterService = do.MustInvoke[*apiHandlers.APIRouterService](svc.injector)
 
 	authRouter := svc.router.Group("")
-	authRouter.Use(authHandlers.AuthSessionMiddleware())
+	authRouter.Use(middleware.AuthSessionMiddleware())
 
 	svc.apiRouterService.RegisterRoutes(svc.router)
 	svc.apiRouterService.RegisterDiscordRoutes(svc.router, authRouter)

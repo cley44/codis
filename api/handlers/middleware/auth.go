@@ -1,4 +1,4 @@
-package handlerAPIAuth
+package middleware
 
 import (
 	"net/http"
