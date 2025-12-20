@@ -43,7 +43,7 @@ const helloworldError = ref<string | null>(null)
 
 const inviteLinkUrl = `${BACKEND_BASE_URL}/discord/invite_link`
 const callbackUrl = `${BACKEND_BASE_URL}/discord/callback`
-const helloworldUrl = `${BACKEND_BASE_URL}/test`
+const helloworldUrl = `${BACKEND_BASE_URL}/discord/guilds`
 
 async function fetchInviteLink() {
   inviteLinkError.value = null

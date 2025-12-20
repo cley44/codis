@@ -23,16 +23,9 @@ func NewAuthAPIController(injector do.Injector) (*AuthAPIController, error) {
 }
 
 func (svc *AuthAPIController) GetProfile(ctx *gin.Context) {
-
-	userID, exist := ctx.Get("user_id")
-	if !exist {
+	user := svc.sessionService.GetCurrentUserFromContext(ctx)
+	if user == nil {
 		utils.AbortRequest(ctx, http.StatusUnauthorized, errors.New("Unauthorized"), "Unauthorized")
-		return
-	}
-
-	user, err := svc.sessionService.GetCurrentUser(userID.(string))
-	if err != nil {
-		utils.AbortRequest(ctx, http.StatusUnauthorized, err, "Unauthorized")
 		return
 	}
 

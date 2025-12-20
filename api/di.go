@@ -7,6 +7,7 @@ import (
 	"codis/handlers"
 	handlerAPIAuth "codis/handlers/auth"
 	handlerAPIDiscord "codis/handlers/discord"
+	"codis/handlers/middleware"
 	"codis/instrumentation"
 	"codis/repository"
 
@@ -37,6 +38,7 @@ func RegisterDiscord(injector do.Injector) {
 }
 
 func RegisterAPI(injector do.Injector) {
+	do.Provide(injector, middleware.NewAuthMiddlewareService)
 	do.Provide(injector, handlers.NewAPIRouterService)
 
 	do.Provide(injector, auth.NewSessionService)

@@ -52,6 +52,18 @@ func (svc SessionService) InitSessionMiddleware() gin.HandlerFunc {
 }
 
 func (svc SessionService) GetCurrentUser(userID string) (models.User, error) {
-
 	return svc.userRepository.GetByID(userID)
+}
+
+func (svc SessionService) GetCurrentUserFromContext(ctx *gin.Context) *models.User {
+	userContext, exist := ctx.Get("user")
+	if !exist {
+		return nil
+	}
+
+	user, ok := userContext.(models.User)
+	if !ok {
+		return nil
+	}
+	return &user
 }

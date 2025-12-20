@@ -52,8 +52,9 @@ func (svc *HTTPAppService) ListenAndServe() {
 
 	svc.apiRouterService = do.MustInvoke[*apiHandlers.APIRouterService](svc.injector)
 
+	authMiddlewareService := do.MustInvoke[*middleware.AuthMiddlewareService](svc.injector)
 	authRouter := svc.router.Group("")
-	authRouter.Use(middleware.AuthSessionMiddleware())
+	authRouter.Use(authMiddlewareService.AuthSessionMiddleware())
 
 	svc.apiRouterService.RegisterRoutes(svc.router)
 	svc.apiRouterService.RegisterDiscordRoutes(svc.router, authRouter)

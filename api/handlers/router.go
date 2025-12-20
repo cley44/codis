@@ -39,9 +39,10 @@ func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine, authRoute
 		discordAPI.GET("/invite_link", svc.discordAPIController.HandleDiscordInviteLink)
 		discordAPI.POST("/callback", svc.discordAPIController.HandleDiscordCallback)
 	}
-
+	discordAPIAuth := authRouter.Group("/discord")
 	{
-		authRouter.GET("/test", svc.authAPIController.GetProfile)
+		discordAPIAuth.GET("/guilds", svc.discordAPIController.HandleDiscordGetGuilds)
+		authRouter.GET("/profil", svc.authAPIController.GetProfile)
 	}
 }
 
