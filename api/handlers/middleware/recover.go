@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"codis/utils/slogger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/samber/oops"
 )
@@ -12,7 +14,7 @@ func GinOopsRecovery() gin.HandlerFunc {
 		}, "gin: panic recovered")
 		//&& !isBrokenPipeError(err)
 		if err != nil {
-			// @TODO log error
+			slogger.Error(err)
 			ctx.JSON(500, "Could not process request")
 		}
 	}

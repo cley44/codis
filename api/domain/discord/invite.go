@@ -8,7 +8,6 @@ import (
 	"github.com/disgoorg/disgo/oauth2"
 )
 
-// @TODO Permissions should be passe as parameters
 func (svc *DiscordService) GetDiscordInviteLink() string {
 
 	params := oauth2.AuthorizationURLParams{
@@ -20,6 +19,26 @@ func (svc *DiscordService) GetDiscordInviteLink() string {
 			discord.OAuth2ScopeGuilds,
 		},
 		Permissions: discord.PermissionAdministrator,
+	}
+
+	authorizatonURL := oauth2.Client.GenerateAuthorizationURL(svc.oauthClient, params)
+
+	return authorizatonURL
+}
+
+func (svc *DiscordService) GetDiscordGuildInviteLink(guild discord.OAuth2Guild) string {
+
+	params := oauth2.AuthorizationURLParams{
+		RedirectURI: svc.config.Discord.RedirectURI,
+		Scopes: []discord.OAuth2Scope{
+			discord.OAuth2ScopeBot,
+			discord.OAuth2ScopeApplicationsCommands,
+		},
+		// i should probably change that
+		Permissions:        discord.PermissionAdministrator,
+		GuildID:            guild.ID,
+		DisableGuildSelect: true,
+		IntegrationType:    discord.ApplicationIntegrationTypeGuildInstall,
 	}
 
 	authorizatonURL := oauth2.Client.GenerateAuthorizationURL(svc.oauthClient, params)

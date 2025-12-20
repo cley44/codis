@@ -24,6 +24,7 @@ require (
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.4.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/samber/slog-common v0.19.0 // indirect
 	go.opentelemetry.io/otel v1.29.0 // indirect

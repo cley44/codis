@@ -3,8 +3,11 @@
 <template>
   <div class="app">
     <header class="header">
-      <h1 class="title">codis</h1>
+      <RouterLink to="/" class="title-link">
+        <h1 class="title">codis</h1>
+      </RouterLink>
       <nav class="nav">
+        <RouterLink to="/" class="link">Dashboard</RouterLink>
         <RouterLink to="/debug/discord-oauth" class="link">Discord OAuth Debug</RouterLink>
       </nav>
     </header>
@@ -58,6 +61,11 @@ body {
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid rgba(31, 41, 55, 0.9);
   background: rgba(15, 23, 42, 0.96);
+}
+
+.title-link {
+  text-decoration: none;
+  color: inherit;
 }
 
 .title {
