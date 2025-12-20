@@ -23,8 +23,8 @@ func NewAuthAPIController(injector do.Injector) (*AuthAPIController, error) {
 }
 
 func (svc *AuthAPIController) GetProfile(ctx *gin.Context) {
-	user := svc.sessionService.GetCurrentUserFromContext(ctx)
-	if user == nil {
+	user, err := svc.sessionService.GetCurrentUserFromContext(ctx)
+	if err != nil {
 		utils.AbortRequest(ctx, http.StatusUnauthorized, errors.New("Unauthorized"), "Unauthorized")
 		return
 	}

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"codis/config"
+	"codis/domain/discord"
 	"codis/models"
 	"codis/repository"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-contrib/sessions/postgres"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do/v2"
+	"github.com/samber/oops"
 )
 
 type SessionService struct {
@@ -17,6 +19,7 @@ type SessionService struct {
 	userRepository          *repository.UserRepository
 	postgresDatabaseService *repository.PostgresDatabaseService
 	Store                   postgres.Store
+	discordService          *discord.DiscordService
 }
 
 func NewSessionService(injector do.Injector) (*SessionService, error) {
@@ -33,6 +36,7 @@ func NewSessionService(injector do.Injector) (*SessionService, error) {
 		userRepository:          do.MustInvoke[*repository.UserRepository](injector),
 		postgresDatabaseService: postgresDatabaseService,
 		Store:                   store,
+		discordService:          do.MustInvoke[*discord.DiscordService](injector),
 	}
 
 	return &s, nil
@@ -55,15 +59,23 @@ func (svc SessionService) GetCurrentUser(userID string) (models.User, error) {
 	return svc.userRepository.GetByID(userID)
 }
 
-func (svc SessionService) GetCurrentUserFromContext(ctx *gin.Context) *models.User {
+func (svc SessionService) GetCurrentUserFromContext(ctx *gin.Context) (models.User, error) {
 	userContext, exist := ctx.Get("user")
 	if !exist {
-		return nil
+		return models.User{}, oops.Errorf("No user in context")
 	}
 
 	user, ok := userContext.(models.User)
 	if !ok {
-		return nil
+		return models.User{}, oops.Errorf("Failed to cast user to models")
 	}
-	return &user
+
+	// We verify that the discord oauth session is still valid if not we refresh it
+	session, err := svc.discordService.VerifySession(user.ID.String(), *user.DiscordSession)
+	if err != nil {
+		return models.User{}, oops.Wrap(err)
+	}
+	user.DiscordSession = &session
+
+	return user, nil
 }

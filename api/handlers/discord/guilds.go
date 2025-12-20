@@ -10,13 +10,13 @@ import (
 
 func (svc *DiscordAPIController) HandleDiscordGetGuilds(ctx *gin.Context) {
 
-	user := svc.sessionService.GetCurrentUserFromContext(ctx)
-	if user == nil {
+	user, err := svc.sessionService.GetCurrentUserFromContext(ctx)
+	if err == nil {
 		utils.AbortRequest(ctx, http.StatusUnauthorized, errors.New("Unauthorized"), "Unauthorized")
 		return
 	}
 
-	guilds, err := svc.discordService.GetGuildsList(*user.DiscordSession)
+	guilds, err := svc.discordService.GetGuildsList(user.ID.String(), *user.DiscordSession)
 	if err != nil {
 		utils.AbortRequest(ctx, http.StatusInternalServerError, err, "Failed to get guilds list")
 		return

@@ -44,3 +44,11 @@ func (u UserRepository) GetByID(ID string) (user models.User, err error) {
 	err = u.postgresDatabaseService.Get(&user, q, ID)
 	return
 }
+
+func (u UserRepository) UpdateSession(userID string, session models.DiscordSession) (err error) {
+
+	q := `UPDATE public.user SET discord_session = $2 WHERE id = $1;`
+
+	err = u.postgresDatabaseService.Exec(q, userID, session)
+	return
+}

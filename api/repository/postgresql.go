@@ -59,3 +59,8 @@ func (svc PostgresDatabaseService) Get(dest interface{}, query string, args ...i
 	err := svc.Db.Get(dest, query, args...)
 	return oops.Wrap(err)
 }
+
+func (svc PostgresDatabaseService) Exec(query string, args ...interface{}) error {
+	_, err := svc.Db.Exec(query, args...)
+	return oops.Wrap(err)
+}
