@@ -44,9 +44,12 @@ func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine, authRoute
 		discordAPIAuth.GET("/guilds", svc.discordAPIController.HandleDiscordGetGuilds)
 		authRouter.GET("/profil", svc.authAPIController.GetProfile)
 	}
+
 }
 
 func (svc *APIRouterService) RegisterRoutes(router *gin.Engine) {
+	// Logout endpoint - accessible without auth middleware
+	router.POST("/logout", svc.authAPIController.Logout)
 	router.GET("/helloworld", func(ctx *gin.Context) {
 
 		session := sessions.Default(ctx)
