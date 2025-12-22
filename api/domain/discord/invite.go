@@ -34,10 +34,10 @@ func (svc *DiscordService) GetDiscordGuildInviteLink(guild discord.OAuth2Guild) 
 			discord.OAuth2ScopeBot,
 			discord.OAuth2ScopeApplicationsCommands,
 		},
-		// i should probably change that
+		//@TODO I should probably change that
 		Permissions:        discord.PermissionAdministrator,
 		GuildID:            guild.ID,
-		DisableGuildSelect: true,
+		DisableGuildSelect: false,
 		IntegrationType:    discord.ApplicationIntegrationTypeGuildInstall,
 	}
 

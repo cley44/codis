@@ -1,9 +1,17 @@
 version: "3.1"
 
 services:
+  rabbitmq:
+    image: rabbitmq:4.2.2
+    ports:
+      - 15672:15672
+    volumes:
+      - ./.data/rabbitmq:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=codis
+      - RABBITMQ_DEFAULT_PASS=codis
   db:
     image: postgres
-    # restart: always
     volumes:
       - ./.data/postgresql:/var/lib/postgresql/data
     environment:
@@ -12,8 +20,3 @@ services:
       POSTGRES_DB: codis
     ports:
       - "5432:5432"
-  adminer:
-    image: adminer
-    # restart: always
-    ports:
-      - 8080:8080
