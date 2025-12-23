@@ -2,13 +2,17 @@ package discord
 
 import (
 	"codis/config"
+	"codis/domain/rabbitmq"
+	"codis/models"
 	"codis/repository"
+	"codis/utils/slogger"
 	"context"
 	"net/http"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgo/oauth2"
 	"github.com/disgoorg/disgo/rest"
@@ -18,10 +22,11 @@ import (
 )
 
 type DiscordService struct {
-	config         *config.ConfigService
-	oauthClient    oauth2.Client
-	botClient      bot.Client
-	userRepository *repository.UserRepository
+	config           *config.ConfigService
+	oauthClient      oauth2.Client
+	botClient        bot.Client
+	userRepository   *repository.UserRepository
+	publisherService *rabbitmq.PublisherService
 }
 
 func NewDiscordService(injector do.Injector) (*DiscordService, error) {
@@ -41,13 +46,24 @@ func NewDiscordService(injector do.Injector) (*DiscordService, error) {
 		// oauth2.WithLogger(slog.Default()),
 	)
 
+	m := DiscordService{
+		config:           config,
+		oauthClient:      oauthClient,
+		botClient:        nil,
+		userRepository:   do.MustInvoke[*repository.UserRepository](injector),
+		publisherService: do.MustInvoke[*rabbitmq.PublisherService](injector),
+	}
+
 	botClient, err := disgo.New(config.Discord.DiscordToken,
 		bot.WithGatewayConfigOpts(
 			gateway.WithIntents(
-				gateway.IntentGuildMembers,
-				gateway.IntentGuilds,
+				// gateway.IntentGuildMembers,
+				// gateway.IntentGuilds,
+				gateway.IntentsNonPrivileged,
 			),
+			gateway.WithAutoReconnect(true),
 		),
+		bot.WithEventListenerFunc(m.OnEvent),
 		bot.WithCacheConfigOpts(
 			cache.WithCaches(cache.FlagGuilds),
 		),
@@ -58,14 +74,32 @@ func NewDiscordService(injector do.Injector) (*DiscordService, error) {
 		panic(err)
 	}
 
+	m.botClient = botClient
+
 	botClient.OpenGateway(context.Background())
 
-	m := DiscordService{
-		config:         config,
-		oauthClient:    oauthClient,
-		botClient:      botClient,
-		userRepository: do.MustInvoke[*repository.UserRepository](injector),
+	return &m, nil
+}
+
+func (m DiscordService) OnEvent(event bot.Event) {
+	msg := rabbitmq.AMQPMessageBody{
+		DiscordEvent: rabbitmq.DiscordEvent{},
+	}
+	switch e := event.(type) {
+	case *events.MessageCreate:
+		msg.DiscordEvent.MessageCreateEvent = e
+		msg.DiscordEvent.Type = models.DiscordEventTypeMessageCreate
+	case *events.MessageReactionAdd:
+		msg.DiscordEvent.MessageReactionAddEvent = e
+		msg.DiscordEvent.Type = models.DiscordEventTypeMessageReactionAdd
+	case *events.Ready:
+	case *events.HeartbeatAck:
+		// Ignored events
+	default:
+		slogger.Info("Unknown event type", "event", event)
+		return
 	}
 
-	return &m, nil
+	m.publisherService.Publish(rabbitmq.RoutingKeyDispatch, msg)
+
 }

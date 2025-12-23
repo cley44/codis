@@ -11,6 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.10.9
 	github.com/lmittmann/tint v1.1.2
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/samber/config v1.4.0
 	github.com/samber/do/v2 v2.0.0
 	github.com/samber/lo v1.52.0
@@ -26,7 +27,6 @@ require (
 	github.com/gorilla/sessions v1.4.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/samber/slog-common v0.19.0 // indirect
 	go.opentelemetry.io/otel v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect

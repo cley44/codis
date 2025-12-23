@@ -10,6 +10,7 @@ type ConfigService struct {
 	Postgres        PostgresConfig
 	Auth            AuthConfig
 	Instrumentation InstrumentationConfig
+	RabbitMQ        RabbitMQConfig
 }
 
 func NewConfigService(injector do.Injector) (*ConfigService, error) {

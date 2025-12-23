@@ -4,6 +4,7 @@ import (
 	"codis/config"
 	"codis/domain/auth"
 	"codis/domain/discord"
+	rabbitmqDomain "codis/domain/rabbitmq"
 	"codis/handlers"
 	handlerAPIAuth "codis/handlers/auth"
 	handlerAPIDiscord "codis/handlers/discord"
@@ -54,6 +55,14 @@ func RegisterInstrumentation(injector do.Injector) {
 	do.Provide(injector, instrumentation.NewLoggerService)
 }
 
+func RegisterRabbitMQ(injector do.Injector) {
+	// Register in order: Connection → QueueManager → ConsumerManager
+	do.Provide(injector, rabbitmqDomain.NewRabbitMQConnectionService)
+	do.Provide(injector, rabbitmqDomain.NewQueueManagerService)
+	do.Provide(injector, rabbitmqDomain.NewConsumerManagerService)
+	do.Provide(injector, rabbitmqDomain.NewPublisherService)
+}
+
 func RegisterAll() *do.RootScope {
 	injector := do.New()
 
@@ -64,6 +73,8 @@ func RegisterAll() *do.RootScope {
 	RegisterAPI(injector)
 
 	RegisterDatabase(injector)
+
+	RegisterRabbitMQ(injector)
 
 	RegisterApp(injector)
 	RegisterDiscord(injector)

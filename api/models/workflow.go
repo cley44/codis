@@ -1,0 +1,18 @@
+package models
+
+import "time"
+
+type Workflow struct {
+	ID                    string             `db:"id" json:"id"`
+	StartNodeID           string             `db:"start_node_id" json:"start_node_id"`
+	GuildID               string             `db:"guild_id" json:"guild_id"`
+	StartingDiscordEvents []DiscordEventType `db:"starting_discord_events" json:"starting_discord_events"`
+	Nodes                 []Node             `db:"nodes" json:"nodes"`
+
+	// Added when we send it into amqp
+	ExecutionID *string `db:"execution_id" json:"execution_id"`
+
+	CreateAt  time.Time  `db:"created_at" json:"created_at"`
+	UpdateAt  time.Time  `db:"updated_at" json:"updated_at"`
+	DeletedAt *time.Time `db:"deleted_at" json:"-"`
+}
