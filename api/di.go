@@ -9,6 +9,7 @@ import (
 	handlerAPIAuth "codis/handlers/auth"
 	handlerAPIDiscord "codis/handlers/discord"
 	"codis/handlers/middleware"
+	handlerAPIWorkflow "codis/handlers/workflow"
 	"codis/instrumentation"
 	"codis/repository"
 
@@ -23,11 +24,14 @@ func RegisterDatabase(injector do.Injector) {
 
 func RegisterRepository(injector do.Injector) {
 	do.Provide(injector, repository.NewUserRepository)
+	do.Provide(injector, repository.NewWorkflowRepository)
+	do.Provide(injector, repository.NewNodeRepository)
 }
 
 func RegisterControllers(injector do.Injector) {
 	do.Provide(injector, handlerAPIDiscord.NewDiscordAPIControllersService)
 	do.Provide(injector, handlerAPIAuth.NewAuthAPIController)
+	do.Provide(injector, handlerAPIWorkflow.NewWorkflowsAPIController)
 }
 
 func RegisterBase(injector do.Injector) {

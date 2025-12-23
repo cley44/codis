@@ -3,7 +3,6 @@ package workers
 import (
 	"codis/domain/rabbitmq"
 	"codis/models"
-	"codis/utils"
 	"log/slog"
 )
 
@@ -40,7 +39,7 @@ func (w *DispatchWorker) HandleMessage(msg rabbitmq.AMQPMessage) error {
 
 	// Example: Process the message
 	slog.Info("Message payload", "payload", msg.Body)
-	utils.PrintJSONIndent(msg.Body.DiscordEvent.MessageCreateEvent.Message.Member.User.Username)
+	// utils.PrintJSONIndent(msg.Body.DiscordEvent.MessageCreateEvent.Message.Member.User.Username)
 
 	switch msg.Body.DiscordEvent.Type {
 	case models.DiscordEventTypeMessageReactionAdd:

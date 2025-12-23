@@ -8,6 +8,7 @@ import (
 	"codis/domain/auth"
 	authHandlers "codis/handlers/auth"
 	controllerDiscord "codis/handlers/discord"
+	handlerWorkflow "codis/handlers/workflow"
 	"codis/utils"
 )
 
@@ -15,6 +16,7 @@ type APIRouterService struct {
 	discordAPIController *controllerDiscord.DiscordAPIController
 	authAPIController    *authHandlers.AuthAPIController
 	sessionService       *auth.SessionService
+	workflowAPIController *handlerWorkflow.WorkflowsAPIController
 }
 
 func NewAPIRouterService(injector do.Injector) (*APIRouterService, error) {
@@ -22,6 +24,7 @@ func NewAPIRouterService(injector do.Injector) (*APIRouterService, error) {
 		discordAPIController: do.MustInvoke[*controllerDiscord.DiscordAPIController](injector),
 		sessionService:       do.MustInvoke[*auth.SessionService](injector),
 		authAPIController:    do.MustInvoke[*authHandlers.AuthAPIController](injector),
+		workflowAPIController: do.MustInvoke[*handlerWorkflow.WorkflowsAPIController](injector),
 	}
 
 	m.init()
@@ -43,6 +46,22 @@ func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine, authRoute
 	{
 		discordAPIAuth.GET("/guilds", svc.discordAPIController.HandleDiscordGetGuilds)
 		authRouter.GET("/profil", svc.authAPIController.GetProfile)
+	}
+
+	// Workflow routes (require auth)
+	workflowController := svc.workflowAPIController
+	workflows := authRouter.Group("/workflows")
+	{
+		workflows.GET("", workflowController.ListWorkflows)
+		workflows.POST("", workflowController.CreateWorkflow)
+		workflows.GET(":workflow_id", workflowController.GetWorkflow)
+		workflows.PUT(":workflow_id", workflowController.UpdateWorkflow)
+		workflows.DELETE(":workflow_id", workflowController.DeleteWorkflow)
+
+		workflows.GET(":workflow_id/nodes", workflowController.ListNodes)
+		workflows.POST(":workflow_id/nodes", workflowController.CreateNode)
+		workflows.PUT(":workflow_id/nodes/:node_id", workflowController.UpdateNode)
+		workflows.DELETE(":workflow_id/nodes/:node_id", workflowController.DeleteNode)
 	}
 
 }
