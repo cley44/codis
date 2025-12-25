@@ -1,24 +1,25 @@
 package handlerAPIWorkflow
 
 import (
-	"encoding/json"
 	"codis/models"
 	"codis/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
 // ListWorkflows handles GET /workflows
 func (svc *WorkflowsAPIController) ListWorkflows(ctx *gin.Context) {
 	guildID := ctx.Query("guild_id")
-	var gid *string
-	if guildID != "" {
-		gid = &guildID
+	_, err := uuid.Parse(guildID)
+	if err != nil {
+		utils.AbortRequest(ctx, http.StatusBadRequest, err, "Guild id is not valid")
+		return
 	}
 
-	workflows, err := svc.workflowRepository.List(gid)
+	workflows, err := svc.workflowRepository.ListByGuildID(guildID)
 	if err != nil {
 		utils.AbortRequest(ctx, http.StatusInternalServerError, err, "Failed to list workflows")
 		return
@@ -30,8 +31,8 @@ func (svc *WorkflowsAPIController) ListWorkflows(ctx *gin.Context) {
 // CreateWorkflow handles POST /workflows
 func (svc *WorkflowsAPIController) CreateWorkflow(ctx *gin.Context) {
 	var body struct {
-		StartNodeID           *string               `json:"start_node_id"`
-		GuildID               string                `json:"guild_id" binding:"required"`
+		StartingNodesIDs      []string                  `json:"starting_nodes_ids"`
+		GuildID               string                    `json:"guild_id" binding:"required"`
 		StartingDiscordEvents []models.DiscordEventType `json:"starting_discord_events"`
 	}
 
@@ -41,7 +42,7 @@ func (svc *WorkflowsAPIController) CreateWorkflow(ctx *gin.Context) {
 	}
 
 	wf, err := svc.workflowRepository.Create(
-		lo.Ternary(body.StartNodeID != nil, *body.StartNodeID, ""),
+		lo.Ternary(body.StartingNodesIDs != nil, body.StartingNodesIDs, []string{}),
 		body.GuildID,
 		body.StartingDiscordEvents,
 	)
@@ -69,9 +70,8 @@ func (svc *WorkflowsAPIController) GetWorkflow(ctx *gin.Context) {
 func (svc *WorkflowsAPIController) UpdateWorkflow(ctx *gin.Context) {
 	id := ctx.Param("workflow_id")
 	var body struct {
-		StartNodeID           *string               `json:"start_node_id"`
+		StartingNodesIDs      []string                  `json:"starting_nodes_ids"`
 		StartingDiscordEvents []models.DiscordEventType `json:"starting_discord_events"`
-		Edges                 map[string]interface{} `json:"edges"`
 	}
 
 	if err := ctx.BindJSON(&body); err != nil {
@@ -85,22 +85,12 @@ func (svc *WorkflowsAPIController) UpdateWorkflow(ctx *gin.Context) {
 		return
 	}
 
-	if body.StartNodeID != nil {
-		wf.StartNodeID = *body.StartNodeID
+	if body.StartingNodesIDs != nil {
+		wf.StartingNodesIDs = body.StartingNodesIDs
 	}
 
 	if body.StartingDiscordEvents != nil {
 		wf.StartingDiscordEvents = body.StartingDiscordEvents
-	}
-
-	// marshal edges back into json.RawMessage
-	if body.Edges != nil {
-		b, err := json.Marshal(body.Edges)
-		if err != nil {
-			utils.AbortRequest(ctx, http.StatusBadRequest, err, "Invalid edges")
-			return
-		}
-		wf.Edges = b
 	}
 
 	updated, err := svc.workflowRepository.Update(wf)
@@ -127,7 +117,7 @@ func (svc *WorkflowsAPIController) DeleteWorkflow(ctx *gin.Context) {
 // ListNodes handles GET /workflows/:workflow_id/nodes
 func (svc *WorkflowsAPIController) ListNodes(ctx *gin.Context) {
 	workflowID := ctx.Param("workflow_id")
-	nodes, err := svc.nodeRepository.ListByWorkflow(workflowID)
+	nodes, err := svc.nodeRepository.ListByWorkflowID(workflowID)
 	if err != nil {
 		utils.AbortRequest(ctx, http.StatusInternalServerError, err, "Failed to list nodes")
 		return
@@ -140,9 +130,8 @@ func (svc *WorkflowsAPIController) ListNodes(ctx *gin.Context) {
 func (svc *WorkflowsAPIController) CreateNode(ctx *gin.Context) {
 	workflowID := ctx.Param("workflow_id")
 	var body struct {
-		Type       string                 `json:"type" binding:"required"`
+		Type       models.DiscordNodeType `json:"type" binding:"required"`
 		NextNodeID *string                `json:"next_node_id"`
-		Meta       map[string]interface{} `json:"meta"`
 	}
 
 	if err := ctx.BindJSON(&body); err != nil {
@@ -150,21 +139,10 @@ func (svc *WorkflowsAPIController) CreateNode(ctx *gin.Context) {
 		return
 	}
 
-	metaRaw := []byte("{}")
-	if body.Meta != nil {
-		b, err := json.Marshal(body.Meta)
-		if err != nil {
-			utils.AbortRequest(ctx, http.StatusBadRequest, err, "Invalid meta")
-			return
-		}
-		metaRaw = b
-	}
-
 	node := models.Node{
 		WorkflowID: workflowID,
 		Type:       body.Type,
 		NextNodeID: body.NextNodeID,
-		Meta:       metaRaw,
 	}
 
 	created, err := svc.nodeRepository.Create(node)
@@ -179,9 +157,8 @@ func (svc *WorkflowsAPIController) CreateNode(ctx *gin.Context) {
 // UpdateNode handles PUT /workflows/:workflow_id/nodes/:node_id
 func (svc *WorkflowsAPIController) UpdateNode(ctx *gin.Context) {
 	var body struct {
-		Type       *string                `json:"type"`
-		NextNodeID *string                `json:"next_node_id"`
-		Meta       map[string]interface{} `json:"meta"`
+		Type       *models.DiscordNodeType `json:"type"`
+		NextNodeID *string                 `json:"next_node_id"`
 	}
 
 	if err := ctx.BindJSON(&body); err != nil {
@@ -202,15 +179,6 @@ func (svc *WorkflowsAPIController) UpdateNode(ctx *gin.Context) {
 
 	if body.NextNodeID != nil {
 		node.NextNodeID = body.NextNodeID
-	}
-
-	if body.Meta != nil {
-		b, err := json.Marshal(body.Meta)
-		if err != nil {
-			utils.AbortRequest(ctx, http.StatusBadRequest, err, "Invalid meta")
-			return
-		}
-		node.Meta = b
 	}
 
 	updated, err := svc.nodeRepository.Update(node)

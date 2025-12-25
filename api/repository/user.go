@@ -39,7 +39,7 @@ func (u UserRepository) CreateOrUpdate(username string, displayUsername *string,
 
 func (u UserRepository) GetByID(ID string) (user models.User, err error) {
 
-	q := `SELECT * from public.user WHERE id = $1`
+	q := `SELECT * from public.user WHERE id = $1 AND deleted_at IS NULL`
 
 	err = u.postgresDatabaseService.Get(&user, q, ID)
 	return

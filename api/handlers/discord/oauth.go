@@ -1,8 +1,8 @@
 package handlerAPIDiscord
 
 import (
+	"codis/handlers/handlers"
 	"codis/utils"
-	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -17,11 +17,7 @@ func (svc *DiscordAPIController) HandleDiscordInviteLink(ctx *gin.Context) {
 }
 
 func (svc *DiscordAPIController) HandleDiscordCallback(ctx *gin.Context) {
-	var body DiscordCallbackRequest
-	if err := ctx.BindJSON(&body); err != nil {
-		utils.AbortRequest(ctx, http.StatusBadRequest, err, "Bad request")
-		return
-	}
+	body := handlers.GetBody(ctx).(*DiscordCallbackRequest)
 
 	discordOauthSession := svc.discordService.StartSession(body.Code, body.State)
 

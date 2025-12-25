@@ -3,16 +3,13 @@ package discord
 import (
 	"codis/config"
 	"codis/domain/rabbitmq"
-	"codis/models"
 	"codis/repository"
-	"codis/utils/slogger"
 	"context"
 	"net/http"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
-	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgo/oauth2"
 	"github.com/disgoorg/disgo/rest"
@@ -79,27 +76,4 @@ func NewDiscordService(injector do.Injector) (*DiscordService, error) {
 	botClient.OpenGateway(context.Background())
 
 	return &m, nil
-}
-
-func (m DiscordService) OnEvent(event bot.Event) {
-	msg := rabbitmq.AMQPMessageBody{
-		DiscordEvent: rabbitmq.DiscordEvent{},
-	}
-	switch e := event.(type) {
-	case *events.MessageCreate:
-		msg.DiscordEvent.MessageCreateEvent = e
-		msg.DiscordEvent.Type = models.DiscordEventTypeMessageCreate
-	case *events.MessageReactionAdd:
-		msg.DiscordEvent.MessageReactionAddEvent = e
-		msg.DiscordEvent.Type = models.DiscordEventTypeMessageReactionAdd
-	case *events.Ready:
-	case *events.HeartbeatAck:
-		// Ignored events
-	default:
-		slogger.Info("Unknown event type", "event", event)
-		return
-	}
-
-	m.publisherService.Publish(rabbitmq.RoutingKeyDispatch, msg)
-
 }

@@ -16,7 +16,7 @@ func main() {
 
 	// Register RabbitMQ workers here
 	// Example:
-	codis.RegisterWorkers(injector, workers.NewDispatchWorker())
+	codis.RegisterWorkers(injector, workers.NewDispatchWorker(injector))
 
 	// Setup RabbitMQ: declare queues and start consumers
 	if err := codis.SetupRabbitMQWorkers(injector); err != nil {

@@ -20,8 +20,8 @@ func NewNodeRepository(injector do.Injector) (*NodeRepository, error) {
 }
 
 func (r NodeRepository) Create(node models.Node) (created models.Node, err error) {
-	q := `INSERT INTO public.node (workflow_id, type, next_node_id, meta) VALUES ($1, $2, $3, $4) RETURNING *;`
-	err = r.postgresDatabaseService.Get(&created, q, node.WorkflowID, node.Type, node.NextNodeID, node.Meta)
+	q := `INSERT INTO public.node (workflow_id, type, next_node_id) VALUES ($1, $2, $3) RETURNING *;`
+	err = r.postgresDatabaseService.Get(&created, q, node.WorkflowID, node.Type, node.NextNodeID)
 	return
 }
 
@@ -31,7 +31,7 @@ func (r NodeRepository) GetByID(id string) (node models.Node, err error) {
 	return
 }
 
-func (r NodeRepository) ListByWorkflow(workflowID string) (nodes []models.Node, err error) {
+func (r NodeRepository) ListByWorkflowID(workflowID string) (nodes []models.Node, err error) {
 	q := `SELECT * FROM public.node WHERE workflow_id = $1 AND deleted_at IS NULL ORDER BY created_at;`
 	err = r.postgresDatabaseService.Db.Select(&nodes, q, workflowID)
 	if err != nil {
@@ -41,8 +41,8 @@ func (r NodeRepository) ListByWorkflow(workflowID string) (nodes []models.Node, 
 }
 
 func (r NodeRepository) Update(node models.Node) (updated models.Node, err error) {
-	q := `UPDATE public.node SET type = $1, next_node_id = $2, meta = $3, updated_at = NOW() WHERE id = $4 AND deleted_at IS NULL RETURNING *;`
-	err = r.postgresDatabaseService.Get(&updated, q, node.Type, node.NextNodeID, node.Meta, node.ID)
+	q := `UPDATE public.node SET type = $1, next_node_id = $2, updated_at = NOW() WHERE id = $3 AND deleted_at IS NULL RETURNING *;`
+	err = r.postgresDatabaseService.Get(&updated, q, node.Type, node.NextNodeID, node.ID)
 	return
 }
 

@@ -8,22 +8,23 @@ import (
 	"codis/domain/auth"
 	authHandlers "codis/handlers/auth"
 	controllerDiscord "codis/handlers/discord"
+	"codis/handlers/middleware"
 	handlerWorkflow "codis/handlers/workflow"
 	"codis/utils"
 )
 
 type APIRouterService struct {
-	discordAPIController *controllerDiscord.DiscordAPIController
-	authAPIController    *authHandlers.AuthAPIController
-	sessionService       *auth.SessionService
+	discordAPIController  *controllerDiscord.DiscordAPIController
+	authAPIController     *authHandlers.AuthAPIController
+	sessionService        *auth.SessionService
 	workflowAPIController *handlerWorkflow.WorkflowsAPIController
 }
 
 func NewAPIRouterService(injector do.Injector) (*APIRouterService, error) {
 	m := APIRouterService{
-		discordAPIController: do.MustInvoke[*controllerDiscord.DiscordAPIController](injector),
-		sessionService:       do.MustInvoke[*auth.SessionService](injector),
-		authAPIController:    do.MustInvoke[*authHandlers.AuthAPIController](injector),
+		discordAPIController:  do.MustInvoke[*controllerDiscord.DiscordAPIController](injector),
+		sessionService:        do.MustInvoke[*auth.SessionService](injector),
+		authAPIController:     do.MustInvoke[*authHandlers.AuthAPIController](injector),
 		workflowAPIController: do.MustInvoke[*handlerWorkflow.WorkflowsAPIController](injector),
 	}
 
@@ -40,7 +41,7 @@ func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine, authRoute
 	discordAPI := router.Group("/discord")
 	{
 		discordAPI.GET("/invite_link", svc.discordAPIController.HandleDiscordInviteLink)
-		discordAPI.POST("/callback", svc.discordAPIController.HandleDiscordCallback)
+		discordAPI.POST("/callback", middleware.ValidateBodyMiddleware(controllerDiscord.DiscordCallbackRequest{}), svc.discordAPIController.HandleDiscordCallback)
 	}
 	discordAPIAuth := authRouter.Group("/discord")
 	{

@@ -1,6 +1,6 @@
 package handlerAPIDiscord
 
-type DiscordGuilds struct {
+type DiscordGuildsResponse struct {
 	ID            string
 	Name          string
 	IconURL       *string

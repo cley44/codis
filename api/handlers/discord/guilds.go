@@ -23,12 +23,12 @@ func (svc *DiscordAPIController) HandleDiscordGetGuilds(ctx *gin.Context) {
 		return
 	}
 
-	guildsResponse := []DiscordGuilds{}
+	guildsResponse := []DiscordGuildsResponse{}
 
 	for _, g := range guilds {
 		if g.Permissions.Has(discord.PermissionAdministrator) {
 			_, exist := svc.discordService.IsBotAMemberOfguild(g.ID)
-			guildResponse := DiscordGuilds{
+			guildResponse := DiscordGuildsResponse{
 				ID:            g.ID.String(),
 				Name:          g.Name,
 				BannerURL:     g.Banner,
