@@ -16,6 +16,8 @@ export interface Node {
   next_node_id: string | null
   data?: {
     role_id?: string | null
+    channel_id?: string | null
+    message_content?: string | null
   }
   created_at: string
   updated_at: string
@@ -49,7 +51,7 @@ export interface NodeData {
   // Node-specific properties (for inline editing)
   roleId?: string
   channelId?: string
-  message?: string
+  messageContent?: string
 }
 
 export interface VueFlowEdge {

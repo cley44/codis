@@ -63,6 +63,8 @@ export function useWorkflowTransform() {
             nodeType: node.type,
             nodeId: node.id,
             roleId: node.data?.role_id || undefined,
+            channelId: node.data?.channel_id || undefined,
+            messageContent: node.data?.message_content || undefined,
           },
         })
 
@@ -156,6 +158,8 @@ export function useWorkflowTransform() {
         next_node_id,
         data: {
           role_id: vfNode.data.roleId || null,
+          channel_id: vfNode.data.channelId || null,
+          message_content: vfNode.data.messageContent || null,
         },
         created_at: '', // Backend will set
         updated_at: '',

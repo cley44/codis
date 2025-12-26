@@ -11,10 +11,10 @@ const channelId = computed({
   },
 })
 
-const message = computed({
-  get: () => node.data.message || '',
+const messageContent = computed({
+  get: () => node.data.messageContent || '',
   set: (value: string) => {
-    node.data.message = value
+    node.data.messageContent = value
   },
 })
 </script>
@@ -41,7 +41,7 @@ const message = computed({
         <label for="message">Message:</label>
         <textarea
           id="message"
-          v-model="message"
+          v-model="messageContent"
           placeholder="Enter message..."
           class="textarea"
           rows="3"

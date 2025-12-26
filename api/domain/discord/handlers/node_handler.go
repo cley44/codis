@@ -1,6 +1,7 @@
 package discordHandler
 
 import (
+	discordHandlerMessage "codis/domain/discord/handlers/message"
 	discordHandlerRole "codis/domain/discord/handlers/role"
 	"codis/domain/rabbitmq"
 	"codis/models"
@@ -18,7 +19,7 @@ func NewNodeHandlerService(injector do.Injector) (*NodeHandlerService, error) {
 	handlers := []rabbitmq.NodeHandler{
 		do.MustInvoke[*discordHandlerRole.HandlerAddMemberRole](injector),
 		do.MustInvoke[*discordHandlerRole.HandlerRemoveMemberRole](injector),
-		// Add more handlers here
+		do.MustInvoke[*discordHandlerMessage.HandlerSendMessage](injector),
 	}
 
 	for _, handler := range handlers {

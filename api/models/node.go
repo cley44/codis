@@ -23,7 +23,9 @@ type Node struct {
 }
 
 type NodeData struct {
-	RoleID *string `json:"role_id,omitempty"`
+	RoleID         *string `json:"role_id,omitempty"`
+	ChannelID      *string `json:"channel_id,omitempty"`
+	MessageContent *string `json:"message_content,omitempty"`
 }
 
 func (s *NodeData) Scan(src interface{}) error {
