@@ -22,22 +22,38 @@ func NewWorkflowRepository(injector do.Injector) (*WorkflowRepository, error) {
 // Create inserts a new workflow into the database and returns the created workflow.
 func (w WorkflowRepository) Create(startingNodesIDs []string, guildID string, startingDiscordEvents []models.DiscordEventType) (workflow models.Workflow, err error) {
 	q := `INSERT INTO public.workflow
-		(starting_nodes_ids, guild_id, starting_discord_events, edges)
-	VALUES ($1, $2, $3, $4)
+		(guild_id, starting_discord_events)
+	VALUES ($1, $2)
 	RETURNING *;`
 
-	// default edges to empty array
-	err = w.postgresDatabaseService.Get(&workflow, q, startingNodesIDs, guildID, startingDiscordEvents, []byte("[]"))
+	err = w.postgresDatabaseService.Get(&workflow, q, guildID, models.DiscordEventTypeArray(startingDiscordEvents))
 	return
 }
 
-func (w WorkflowRepository) ListByGuildID(guildID string) (workflows []models.Workflow, err error) {
-	q := `SELECT * FROM public.workflow WHERE guild_id = $1 AND deleted_at IS NULL`
+func (w WorkflowRepository) ListByGuildID(guildID string, withStartingNodesIDs bool) (workflows []models.Workflow, err error) {
+	q := `SELECT *, snids.starting_nodes_ids FROM public.workflow `
+
+	if withStartingNodesIDs {
+		q += `LEFT JOIN LATERAL (
+			SELECT ARRAY_AGG(wsn.node_id) AS starting_nodes_ids
+			FROM public.workflow_starting_node wsn
+			WHERE wsn.workflow_id = id) AS snids ON true `
+	}
+
+	q += `WHERE guild_id = $1 AND deleted_at IS NULL`
 
 	err = w.postgresDatabaseService.Db.Select(&workflows, q, guildID)
 	if err != nil {
 		return nil, oops.Wrap(err)
 	}
+
+	// Initialize empty nodes array for each workflow
+	for i := range workflows {
+		if workflows[i].Nodes == nil {
+			workflows[i].Nodes = []models.Node{}
+		}
+	}
+
 	return
 }
 
@@ -63,14 +79,33 @@ func (w WorkflowRepository) GetByID(id string) (workflow models.Workflow, err er
 
 func (w WorkflowRepository) GetByStartingDiscordEvents(guildID string, discordEventTypes []models.DiscordEventType) (workflow models.Workflow, err error) {
 	q := `SELECT * FROM public.workflow WHERE guild_id = $1 AND starting_discord_events && $2 AND deleted_at IS NULL;`
-	err = w.postgresDatabaseService.Get(&workflow, q, guildID, discordEventTypes)
+	err = w.postgresDatabaseService.Get(&workflow, q, guildID, models.DiscordEventTypeArray(discordEventTypes))
 	return
 }
 
 // Update updates the provided fields of a workflow and returns the updated row
-func (w WorkflowRepository) Update(workflow models.Workflow) (updated models.Workflow, err error) {
-	q := `UPDATE public.workflow SET starting_nodes_ids = $1, starting_discord_events = $2, updated_at = NOW() WHERE id = $3 AND deleted_at IS NULL RETURNING *;`
-	err = w.postgresDatabaseService.Get(&updated, q, workflow.StartingNodesIDs, workflow.StartingDiscordEvents, workflow.ID)
+func (w WorkflowRepository) Update(workflowID string, startingDiscordEvents models.DiscordEventTypeArray, startingNodesIDs []string) (updated models.Workflow, err error) {
+	q := `UPDATE public.workflow SET starting_discord_events = $2, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING *;`
+	err = w.postgresDatabaseService.Get(&updated, q, workflowID, startingDiscordEvents)
+	if err != nil {
+		return models.Workflow{}, err
+	}
+	// @TODO Change and opitmize this shitty code
+	// Update starting nodes IDs
+	// First, delete existing starting nodes
+	delQ := `DELETE FROM public.workflow_starting_node WHERE workflow_id = $1;`
+	err = w.postgresDatabaseService.Exec(delQ, workflowID)
+	if err != nil {
+		return models.Workflow{}, err
+	}
+	// Then, insert new starting nodes
+	for _, nodeID := range startingNodesIDs {
+		insQ := `INSERT INTO public.workflow_starting_node (workflow_id, node_id) VALUES ($1, $2);`
+		err = w.postgresDatabaseService.Exec(insQ, workflowID, nodeID)
+		if err != nil {
+			return models.Workflow{}, err
+		}
+	}
 	return
 }
 

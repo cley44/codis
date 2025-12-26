@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/samber/oops"
 )
 
 const maxBodySize = 2000
@@ -68,6 +69,8 @@ func LoggerMiddleware() gin.HandlerFunc {
 				slog.String("req_body", br.String()),
 				slog.String("res_body", bw.String()),
 			)
+			test, _ := oops.AsOops(ctx.Errors[0])
+			println(test.Stacktrace())
 		}
 	}
 }

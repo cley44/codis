@@ -36,6 +36,20 @@ const router = createRouter({
       name: 'DiscordOAuthDebug',
       component: DiscordOAuthDebug,
     },
+    {
+      path: '/guilds/:guildId/workflows',
+      name: 'WorkflowList',
+      component: () => import('../views/WorkflowList.vue'),
+      meta: { requiresAuth: true },
+      props: true,
+    },
+    {
+      path: '/guilds/:guildId/workflows/:workflowId',
+      name: 'WorkflowEditor',
+      component: () => import('../views/WorkflowEditor.vue'),
+      meta: { requiresAuth: true },
+      props: true,
+    },
   ],
 })
 

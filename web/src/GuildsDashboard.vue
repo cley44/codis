@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const BACKEND_BASE_URL = 'http://localhost:80'
 
 interface DiscordGuild {
@@ -125,14 +127,21 @@ onMounted(() => {
 
           <div class="card-footer">
             <button
-              v-if="!guild.BotPresent"
+              v-if="guild.BotPresent"
+              type="button"
+              class="btn btn-workflows"
+              @click="router.push({ name: 'WorkflowList', params: { guildId: guild.ID } })"
+            >
+              Manage Workflows
+            </button>
+            <button
+              v-else
               type="button"
               class="btn btn-invite"
               @click="handleInviteBot(guild)"
             >
               Invite Bot
             </button>
-            <span v-else class="bot-status-active">Bot is active</span>
           </div>
         </div>
       </div>

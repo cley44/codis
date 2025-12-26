@@ -2,7 +2,9 @@ package repository
 
 import (
 	"codis/models"
+	"strconv"
 
+	"github.com/lib/pq"
 	"github.com/samber/do/v2"
 	"github.com/samber/oops"
 )
@@ -22,6 +24,25 @@ func NewNodeRepository(injector do.Injector) (*NodeRepository, error) {
 func (r NodeRepository) Create(node models.Node) (created models.Node, err error) {
 	q := `INSERT INTO public.node (workflow_id, type, next_node_id) VALUES ($1, $2, $3) RETURNING *;`
 	err = r.postgresDatabaseService.Get(&created, q, node.WorkflowID, node.Type, node.NextNodeID)
+	return
+}
+
+func (r NodeRepository) CreateMany(nodes []models.Node) (created []models.Node, err error) {
+	q := `INSERT INTO public.node (id, workflow_id, type, next_node_id) VALUES `
+	values := []interface{}{}
+	for i, node := range nodes {
+		q += `($` + strconv.Itoa(i+1) + `, $` + strconv.Itoa(i+2) + `, $` + strconv.Itoa(i+3) + `, $` + strconv.Itoa(i+4) + `)`
+		if i < len(nodes)-1 {
+			q += `, `
+		}
+		values = append(values, node.ID, node.WorkflowID, node.Type, node.NextNodeID)
+	}
+	q += ` RETURNING *;`
+
+	err = r.postgresDatabaseService.Db.Select(&created, q, values...)
+	if err != nil {
+		return nil, oops.Wrap(err)
+	}
 	return
 }
 
@@ -46,8 +67,8 @@ func (r NodeRepository) Update(node models.Node) (updated models.Node, err error
 	return
 }
 
-func (r NodeRepository) Delete(id string) (err error) {
-	q := `UPDATE public.node SET deleted_at = NOW() WHERE id = $1;`
-	err = r.postgresDatabaseService.Exec(q, id)
+func (r NodeRepository) Delete(ids []string) (err error) {
+	q := `UPDATE public.node SET deleted_at = NOW() WHERE id = ANY($1);`
+	err = r.postgresDatabaseService.Exec(q, pq.StringArray(ids))
 	return
 }
