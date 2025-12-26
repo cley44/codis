@@ -50,11 +50,11 @@ func (w *DispatchWorker) HandleMessage(msg rabbitmq.AMQPMessage) error {
 	slog.Info("Message payload", "payload", msg.Body)
 	// utils.PrintJSONIndent(msg.Body.DiscordEvent.MessageCreateEvent.Message.Member.User.Username)
 
-	workflow, err := w.workflowRepository.GetByStartingDiscordEvents(msg.Body.DiscordEvent.GuildID, []models.DiscordEventType{msg.Body.DiscordEvent.Type})
+	workflow, exist, err := w.workflowRepository.GetByStartingDiscordEvents(msg.Body.DiscordEvent.GuildID, []models.DiscordEventType{msg.Body.DiscordEvent.Type})
 	if err != nil {
 		return oops.Wrapf(err, "Failed to get workflow")
 	}
-	if workflow.StartingNodesIDs == nil {
+	if !exist || workflow.StartingNodesIDs == nil {
 		return nil
 	}
 

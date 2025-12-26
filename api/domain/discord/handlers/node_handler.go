@@ -1,4 +1,4 @@
-package discord
+package discordHandler
 
 import (
 	"codis/domain/rabbitmq"
@@ -8,7 +8,7 @@ import (
 )
 
 type NodeHandlerService struct {
-	handlerMap map[models.DiscordNodeType]rabbitmq.NodeHandler
+	HandlerMap map[models.DiscordNodeType]rabbitmq.NodeHandler
 }
 
 func NewNodeHandlerService(injector do.Injector) (*NodeHandlerService, error) {
@@ -24,11 +24,11 @@ func NewNodeHandlerService(injector do.Injector) (*NodeHandlerService, error) {
 	}
 
 	return &NodeHandlerService{
-		handlerMap: handlerMap,
+		HandlerMap: handlerMap,
 	}, nil
 }
 
 func (h *NodeHandlerService) GetHandler(actionType models.DiscordNodeType) (rabbitmq.NodeHandler, bool) {
-	handler, exists := h.handlerMap[actionType]
+	handler, exists := h.HandlerMap[actionType]
 	return handler, exists
 }

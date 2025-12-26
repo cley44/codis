@@ -4,6 +4,7 @@ import (
 	"codis/config"
 	"codis/domain/auth"
 	"codis/domain/discord"
+	discordHandler "codis/domain/discord/handlers"
 	rabbitmqDomain "codis/domain/rabbitmq"
 	"codis/handlers"
 	handlerAPIAuth "codis/handlers/auth"
@@ -67,6 +68,11 @@ func RegisterRabbitMQ(injector do.Injector) {
 	do.Provide(injector, rabbitmqDomain.NewPublisherService)
 }
 
+func RegisterDiscordHandlers(injector do.Injector) {
+	do.Provide(injector, discordHandler.NewHandlerAddMemberRole)
+	do.Provide(injector, discordHandler.NewNodeHandlerService)
+}
+
 func RegisterAll() *do.RootScope {
 	injector := do.New()
 
@@ -78,10 +84,13 @@ func RegisterAll() *do.RootScope {
 
 	RegisterDatabase(injector)
 
+	RegisterDiscord(injector)
+
+	RegisterDiscordHandlers(injector)
+
 	RegisterRabbitMQ(injector)
 
 	RegisterApp(injector)
-	RegisterDiscord(injector)
 
 	return injector
 }

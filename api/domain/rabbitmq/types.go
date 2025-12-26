@@ -4,7 +4,6 @@ import (
 	"codis/models"
 	"time"
 
-	"github.com/disgoorg/disgo/bot"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -30,7 +29,7 @@ type DiscordEvent struct {
 	UserID          string                  `amqp:"user_id"`
 	RoleID          string                  `amqp:"role_id"`
 
-	RawEvent bot.Event `amqp:"raw_event"`
+	// RawEvent bot.Event `amqp:"raw_event"`
 }
 
 type AMQPMessage struct {

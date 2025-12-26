@@ -19,18 +19,20 @@ func (m DiscordService) OnEvent(event bot.Event) {
 		msg.DiscordEvent.GuildID = e.GuildID.String()
 		msg.DiscordEvent.UserID = e.Message.Author.ID.String()
 	case *events.MessageReactionAdd:
+	case *events.GuildMessageReactionAdd:
 		msg.DiscordEvent.Type = models.DiscordEventTypeMessageReactionAdd
 		msg.DiscordEvent.GuildID = e.GuildID.String()
 		msg.DiscordEvent.UserID = e.UserID.String()
 	case *events.Ready:
 	case *events.HeartbeatAck:
 		// Ignored events
+		return
 	default:
 		slogger.Info("Unknown event type", "event", event)
 		return
 	}
 
-	msg.DiscordEvent.RawEvent = event
+	// msg.DiscordEvent.RawEvent = event
 
 	err := m.publisherService.Publish(rabbitmq.RoutingKeyDispatch, msg)
 	if err != nil {

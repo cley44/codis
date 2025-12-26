@@ -27,7 +27,7 @@ func NewNodeExecuteWorker(injector do.Injector) *NodeExecuteWorker {
 
 // QueueName returns the name of the queue this worker consumes from
 func (w *NodeExecuteWorker) QueueName() rabbitmq.RoutingKey {
-	return rabbitmq.RoutingKeyDispatch
+	return rabbitmq.RoutingKeyNodeExecute
 }
 
 // QueueOptions returns the queue configuration options

@@ -104,9 +104,15 @@ func (w WorkflowRepository) GetByID(id string, withStartingNodesIDs bool, withNo
 	return
 }
 
-func (w WorkflowRepository) GetByStartingDiscordEvents(guildID string, discordEventTypes []models.DiscordEventType) (workflow models.Workflow, err error) {
-	q := `SELECT * FROM public.workflow WHERE guild_id = $1 AND starting_discord_events && $2 AND deleted_at IS NULL;`
-	err = w.postgresDatabaseService.Get(&workflow, q, guildID, models.DiscordEventTypeArray(discordEventTypes))
+func (w WorkflowRepository) GetByStartingDiscordEvents(guildID string, discordEventTypes []models.DiscordEventType) (workflow models.Workflow, exist bool, err error) {
+	q := `SELECT *, snids.starting_nodes_ids FROM public.workflow
+		LEFT JOIN LATERAL (
+			SELECT COALESCE(ARRAY_AGG(wsn.node_id::text), ARRAY[]::text[]) AS starting_nodes_ids
+			FROM public.workflow_starting_node wsn
+			WHERE wsn.workflow_id = workflow.id) AS snids ON true
+		WHERE guild_id = $1 AND starting_discord_events && $2 AND deleted_at IS NULL;`
+	exist, err = notFoundIsNotAnError(w.postgresDatabaseService.Get(&workflow, q, guildID, models.DiscordEventTypeArray(discordEventTypes)))
+
 	return
 }
 
