@@ -13,4 +13,5 @@ type NodeUpdateRequest struct {
 	WorkflowID string                 `json:"workflow_id"`
 	Type       models.DiscordNodeType `json:"type"`
 	NextNodeID *string                `json:"next_node_id"`
+	Data       models.NodeData        `json:"data"`
 }

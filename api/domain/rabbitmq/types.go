@@ -40,5 +40,5 @@ type AMQPMessage struct {
 
 type NodeHandler interface {
 	GetType() models.DiscordNodeType
-	Execute(msg AMQPMessageBody) error
+	Execute(msg AMQPMessageBody, node models.Node) error
 }

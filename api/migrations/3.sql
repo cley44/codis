@@ -4,6 +4,8 @@ CREATE TABLE "public"."node" (
   "type" text NOT NULL,
   "next_node_id" uuid REFERENCES "public"."node"("id"),
 
+  "data" jsonb NOT NULL DEFAULT '{}',
+
   "created_at" timestamp with time zone NOT NULL DEFAULT NOW(),
   "updated_at" timestamp with time zone NOT NULL DEFAULT NOW(),
   "deleted_at" timestamp

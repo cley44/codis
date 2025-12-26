@@ -1,24 +1,21 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
-import { ref, watch } from 'vue'
+import { Handle, Position, useNode } from '@vue-flow/core'
+import { computed } from 'vue'
 
-const props = defineProps<{
-  data: {
-    nodeId: string
-    channelId?: string
-    message?: string
-  }
-}>()
+const { node } = useNode()
 
-const emit = defineEmits<{
-  'update:data': [data: any]
-}>()
+const channelId = computed({
+  get: () => node.data.channelId || '',
+  set: (value: string) => {
+    node.data.channelId = value
+  },
+})
 
-const channelId = ref(props.data.channelId || '')
-const message = ref(props.data.message || '')
-
-watch([channelId, message], ([newChannelId, newMessage]) => {
-  emit('update:data', { ...props.data, channelId: newChannelId, message: newMessage })
+const message = computed({
+  get: () => node.data.message || '',
+  set: (value: string) => {
+    node.data.message = value
+  },
 })
 </script>
 

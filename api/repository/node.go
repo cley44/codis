@@ -22,20 +22,21 @@ func NewNodeRepository(injector do.Injector) (*NodeRepository, error) {
 }
 
 func (r NodeRepository) Create(node models.Node) (created models.Node, err error) {
-	q := `INSERT INTO public.node (workflow_id, type, next_node_id) VALUES ($1, $2, $3) RETURNING *;`
-	err = r.postgresDatabaseService.Get(&created, q, node.WorkflowID, node.Type, node.NextNodeID)
+	q := `INSERT INTO public.node (workflow_id, type, next_node_id, data) VALUES ($1, $2, $3, $4) RETURNING *;`
+	err = r.postgresDatabaseService.Get(&created, q, node.WorkflowID, node.Type, node.NextNodeID, node.Data)
 	return
 }
 
 func (r NodeRepository) CreateMany(nodes []models.Node) (created []models.Node, err error) {
-	q := `INSERT INTO public.node (id, workflow_id, type, next_node_id) VALUES `
+	q := `INSERT INTO public.node (id, workflow_id, type, next_node_id, data) VALUES `
 	values := []interface{}{}
 	for i, node := range nodes {
-		q += `($` + strconv.Itoa(i+1) + `, $` + strconv.Itoa(i+2) + `, $` + strconv.Itoa(i+3) + `, $` + strconv.Itoa(i+4) + `)`
+		paramOffset := i * 5
+		q += `($` + strconv.Itoa(paramOffset+1) + `, $` + strconv.Itoa(paramOffset+2) + `, $` + strconv.Itoa(paramOffset+3) + `, $` + strconv.Itoa(paramOffset+4) + `, $` + strconv.Itoa(paramOffset+5) + `)`
 		if i < len(nodes)-1 {
 			q += `, `
 		}
-		values = append(values, node.ID, node.WorkflowID, node.Type, node.NextNodeID)
+		values = append(values, node.ID, node.WorkflowID, node.Type, node.NextNodeID, node.Data)
 	}
 	q += ` RETURNING *;`
 
@@ -62,8 +63,8 @@ func (r NodeRepository) ListByWorkflowID(workflowID string) (nodes []models.Node
 }
 
 func (r NodeRepository) Update(node models.Node) (updated models.Node, err error) {
-	q := `UPDATE public.node SET type = $1, next_node_id = $2, updated_at = NOW() WHERE id = $3 AND deleted_at IS NULL RETURNING *;`
-	err = r.postgresDatabaseService.Get(&updated, q, node.Type, node.NextNodeID, node.ID)
+	q := `UPDATE public.node SET type = $1, next_node_id = $2, data = $3, updated_at = NOW() WHERE id = $4 AND deleted_at IS NULL RETURNING *;`
+	err = r.postgresDatabaseService.Get(&updated, q, node.Type, node.NextNodeID, node.Data, node.ID)
 	return
 }
 

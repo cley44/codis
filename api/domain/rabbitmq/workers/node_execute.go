@@ -61,7 +61,7 @@ func (w *NodeExecuteWorker) HandleMessage(msg rabbitmq.AMQPMessage) error {
 		return oops.Errorf("No handler found for node type %s", node.Type)
 	}
 
-	err = handler.Execute(msg.Body)
+	err = handler.Execute(msg.Body, node)
 	if err != nil {
 		return oops.Wrapf(err, "Failed to execute node handler")
 	}

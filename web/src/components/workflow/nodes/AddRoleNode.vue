@@ -1,22 +1,14 @@
 <script setup lang="ts">
-import { Handle, Position } from '@vue-flow/core'
-import { ref, watch } from 'vue'
+import { Handle, Position, useNode } from '@vue-flow/core'
+import { computed } from 'vue'
 
-const props = defineProps<{
-  data: {
-    nodeId: string
-    roleId?: string
-  }
-}>()
+const { node } = useNode()
 
-const emit = defineEmits<{
-  'update:data': [data: any]
-}>()
-
-const roleId = ref(props.data.roleId || '')
-
-watch(roleId, (newValue) => {
-  emit('update:data', { ...props.data, roleId: newValue })
+const roleId = computed({
+  get: () => node.data.roleId || '',
+  set: (value: string) => {
+    node.data.roleId = value
+  },
 })
 </script>
 

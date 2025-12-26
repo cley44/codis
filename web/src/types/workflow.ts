@@ -14,6 +14,9 @@ export interface Node {
   workflow_id: string
   type: DiscordNodeType
   next_node_id: string | null
+  data?: {
+    role_id?: string | null
+  }
   created_at: string
   updated_at: string
 }

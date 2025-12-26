@@ -107,6 +107,7 @@ func (svc *WorkflowsAPIController) UpdateWorkflow(ctx *gin.Context) {
 				WorkflowID: id,
 				Type:       n.Type,
 				NextNodeID: n.NextNodeID,
+				Data:       n.Data,
 			}
 		}))
 		if err != nil {
@@ -121,6 +122,7 @@ func (svc *WorkflowsAPIController) UpdateWorkflow(ctx *gin.Context) {
 			ID:         n.ID,
 			Type:       n.Type,
 			NextNodeID: n.NextNodeID,
+			Data:       n.Data,
 		}
 		_, err := svc.nodeRepository.Update(node)
 		if err != nil {
@@ -168,6 +170,7 @@ func (svc *WorkflowsAPIController) CreateNode(ctx *gin.Context) {
 	var body struct {
 		Type       models.DiscordNodeType `json:"type" binding:"required"`
 		NextNodeID *string                `json:"next_node_id"`
+		Data       models.NodeData        `json:"data"`
 	}
 
 	if err := ctx.BindJSON(&body); err != nil {
@@ -179,6 +182,7 @@ func (svc *WorkflowsAPIController) CreateNode(ctx *gin.Context) {
 		WorkflowID: workflowID,
 		Type:       body.Type,
 		NextNodeID: body.NextNodeID,
+		Data:       body.Data,
 	}
 
 	created, err := svc.nodeRepository.Create(node)
@@ -195,6 +199,7 @@ func (svc *WorkflowsAPIController) UpdateNode(ctx *gin.Context) {
 	var body struct {
 		Type       *models.DiscordNodeType `json:"type"`
 		NextNodeID *string                 `json:"next_node_id"`
+		Data       *models.NodeData        `json:"data"`
 	}
 
 	if err := ctx.BindJSON(&body); err != nil {
@@ -215,6 +220,10 @@ func (svc *WorkflowsAPIController) UpdateNode(ctx *gin.Context) {
 
 	if body.NextNodeID != nil {
 		node.NextNodeID = body.NextNodeID
+	}
+
+	if body.Data != nil {
+		node.Data = *body.Data
 	}
 
 	updated, err := svc.nodeRepository.Update(node)
