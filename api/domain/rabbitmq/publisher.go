@@ -20,6 +20,13 @@ func NewPublisherService(injector do.Injector) (*PublisherService, error) {
 }
 
 func (s *PublisherService) Publish(routingKey RoutingKey, msgBody AMQPMessageBody) error {
+	// Check if connection is still open
+	if !s.connection.IsConnected() {
+		if err := s.connection.Reconnect(); err != nil {
+			return oops.Wrapf(err, "failed to reconnect to RabbitMQ")
+		}
+	}
+
 	channel := s.connection.GetChannel()
 	if channel == nil {
 		return oops.New("channel is nil, connection may be closed")
@@ -33,9 +40,30 @@ func (s *PublisherService) Publish(routingKey RoutingKey, msgBody AMQPMessageBod
 		return oops.Wrapf(err, "failed to marshal message")
 	}
 
-	return channel.PublishWithContext(context.Background(), "", string(routingKey), false, false, amqp091.Publishing{
+	err = channel.PublishWithContext(context.Background(), "", string(routingKey), false, false, amqp091.Publishing{
 		ContentType: "application/json",
 		Body:        body,
 		Timestamp:   time.Now(),
 	})
+
+	// If publish fails due to channel being closed, try to reconnect once and retry
+	if err != nil {
+		if amqpErr, ok := err.(*amqp091.Error); ok && amqpErr.Code == amqp091.ChannelError {
+			if reconnectErr := s.connection.Reconnect(); reconnectErr != nil {
+				return oops.Wrapf(err, "failed to publish and reconnect failed")
+			}
+			// Retry publish after reconnection
+			channel = s.connection.GetChannel()
+			if channel == nil {
+				return oops.Wrapf(err, "channel still nil after reconnection")
+			}
+			err = channel.PublishWithContext(context.Background(), "", string(routingKey), false, false, amqp091.Publishing{
+				ContentType: "application/json",
+				Body:        body,
+				Timestamp:   time.Now(),
+			})
+		}
+	}
+
+	return err
 }
