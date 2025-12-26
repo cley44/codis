@@ -14,7 +14,7 @@ import (
 func (svc *WorkflowsAPIController) ListWorkflows(ctx *gin.Context) {
 	guildID := ctx.Query("guild_id")
 
-	workflows, err := svc.workflowRepository.ListByGuildID(guildID, true)
+	workflows, err := svc.workflowRepository.ListByGuildID(guildID, true, true)
 	if err != nil {
 		utils.AbortRequest(ctx, http.StatusInternalServerError, err, "Failed to list workflows")
 		return
@@ -52,7 +52,7 @@ func (svc *WorkflowsAPIController) CreateWorkflow(ctx *gin.Context) {
 // GetWorkflow handles GET /workflows/:id
 func (svc *WorkflowsAPIController) GetWorkflow(ctx *gin.Context) {
 	id := ctx.Param("workflow_id")
-	wf, err := svc.workflowRepository.GetByID(id)
+	wf, err := svc.workflowRepository.GetByID(id, true, true)
 	if err != nil {
 		utils.AbortRequest(ctx, http.StatusNotFound, err, "Workflow not found")
 		return

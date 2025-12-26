@@ -59,9 +59,18 @@ onMounted(async () => {
 
     if (workflowStore.currentWorkflow) {
       console.log('Loaded workflow:', workflowStore.currentWorkflow)
+      console.log('Workflow nodes:', workflowStore.currentWorkflow.nodes)
+      console.log('Starting nodes:', workflowStore.currentWorkflow.starting_nodes_ids)
+      console.log('Starting events:', workflowStore.currentWorkflow.starting_discord_events)
+
       const { nodes: vfNodes, edges: vfEdges } = backendToVueFlow(workflowStore.currentWorkflow)
       console.log('Transformed nodes:', vfNodes)
       console.log('Transformed edges:', vfEdges)
+
+      if (vfNodes.length === 0 && workflowStore.currentWorkflow.nodes?.length > 0) {
+        console.warn('Nodes exist but transformation returned empty array')
+      }
+
       setNodes(vfNodes)
       setEdges(vfEdges)
     }
@@ -106,6 +115,12 @@ async function handleSave() {
       nodes.value,
       edges.value,
     )
+
+    console.log('Saving workflow:', {
+      starting_nodes_ids: workflow.starting_nodes_ids,
+      starting_discord_events: workflow.starting_discord_events,
+      nodes: backendNodes,
+    })
 
     // Save to backend with the transformed data
     await workflowStore.saveWorkflow(

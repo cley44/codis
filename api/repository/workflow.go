@@ -30,28 +30,37 @@ func (w WorkflowRepository) Create(startingNodesIDs []string, guildID string, st
 	return
 }
 
-func (w WorkflowRepository) ListByGuildID(guildID string, withStartingNodesIDs bool) (workflows []models.Workflow, err error) {
-	q := `SELECT *, snids.starting_nodes_ids FROM public.workflow `
+func (w WorkflowRepository) ListByGuildID(guildID string, withStartingNodesIDs bool, withNodes bool) (workflows []models.Workflow, err error) {
+	// Build SELECT columns conditionally so we only reference aliases that exist
+	selectCols := `w.*`
+	if withStartingNodesIDs {
+		selectCols += `, snids.starting_nodes_ids`
+	}
+	if withNodes {
+		selectCols += `, nd.nodes`
+	}
+
+	q := `SELECT ` + selectCols + ` FROM public.workflow w `
 
 	if withStartingNodesIDs {
 		q += `LEFT JOIN LATERAL (
-			SELECT ARRAY_AGG(wsn.node_id) AS starting_nodes_ids
+			SELECT COALESCE(ARRAY_AGG(wsn.node_id::text), ARRAY[]::text[]) AS starting_nodes_ids
 			FROM public.workflow_starting_node wsn
-			WHERE wsn.workflow_id = id) AS snids ON true `
+			WHERE wsn.workflow_id = w.id) AS snids ON true `
 	}
 
-	q += `WHERE guild_id = $1 AND deleted_at IS NULL`
+	if withNodes {
+		q += `LEFT JOIN LATERAL (
+			SELECT json_agg(n ORDER BY n.created_at) AS nodes
+			FROM public.node n
+			WHERE n.workflow_id = w.id AND n.deleted_at IS NULL) AS nd ON true `
+	}
+
+	q += `WHERE w.guild_id = $1 AND w.deleted_at IS NULL`
 
 	err = w.postgresDatabaseService.Db.Select(&workflows, q, guildID)
 	if err != nil {
 		return nil, oops.Wrap(err)
-	}
-
-	// Initialize empty nodes array for each workflow
-	for i := range workflows {
-		if workflows[i].Nodes == nil {
-			workflows[i].Nodes = []models.Node{}
-		}
 	}
 
 	return
@@ -60,20 +69,38 @@ func (w WorkflowRepository) ListByGuildID(guildID string, withStartingNodesIDs b
 // @TODO change this shit
 // Use a join to get nodes and use a parameter to decide if we get nodes
 // GetByID returns a workflow including its nodes
-func (w WorkflowRepository) GetByID(id string) (workflow models.Workflow, err error) {
-	q := `SELECT * FROM public.workflow WHERE id = $1 AND deleted_at IS NULL;`
-	err = w.postgresDatabaseService.Get(&workflow, q, id)
-	if err != nil {
-		return
+func (w WorkflowRepository) GetByID(id string, withStartingNodesIDs bool, withNodes bool) (workflow models.Workflow, err error) {
+	// Build SELECT columns conditionally so we only reference aliases that exist
+	selectCols := `w.*`
+	if withStartingNodesIDs {
+		selectCols += `, snids.starting_nodes_ids`
+	}
+	if withNodes {
+		selectCols += `, nd.nodes`
 	}
 
-	var nodes []models.Node
-	nq := `SELECT * FROM public.node WHERE workflow_id = $1 AND deleted_at IS NULL ORDER BY created_at;`
-	err = w.postgresDatabaseService.Db.Select(&nodes, nq, id)
+	q := `SELECT ` + selectCols + ` FROM public.workflow w `
+
+	if withStartingNodesIDs {
+		q += `LEFT JOIN LATERAL (
+			SELECT COALESCE(ARRAY_AGG(wsn.node_id::text), ARRAY[]::text[]) AS starting_nodes_ids
+			FROM public.workflow_starting_node wsn
+			WHERE wsn.workflow_id = w.id) AS snids ON true `
+	}
+
+	if withNodes {
+		q += `LEFT JOIN LATERAL (
+			SELECT json_agg(n ORDER BY n.created_at) AS nodes
+			FROM public.node n
+			WHERE n.workflow_id = w.id AND n.deleted_at IS NULL) AS nd ON true `
+	}
+
+	q += `WHERE w.id = $1 AND w.deleted_at IS NULL`
+
+	err = w.postgresDatabaseService.Get(&workflow, q, id)
 	if err != nil {
 		return workflow, oops.Wrap(err)
 	}
-	workflow.Nodes = nodes
 	return
 }
 
@@ -85,11 +112,6 @@ func (w WorkflowRepository) GetByStartingDiscordEvents(guildID string, discordEv
 
 // Update updates the provided fields of a workflow and returns the updated row
 func (w WorkflowRepository) Update(workflowID string, startingDiscordEvents models.DiscordEventTypeArray, startingNodesIDs []string) (updated models.Workflow, err error) {
-	q := `UPDATE public.workflow SET starting_discord_events = $2, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING *;`
-	err = w.postgresDatabaseService.Get(&updated, q, workflowID, startingDiscordEvents)
-	if err != nil {
-		return models.Workflow{}, err
-	}
 	// @TODO Change and opitmize this shitty code
 	// Update starting nodes IDs
 	// First, delete existing starting nodes
@@ -106,6 +128,31 @@ func (w WorkflowRepository) Update(workflowID string, startingDiscordEvents mode
 			return models.Workflow{}, err
 		}
 	}
+
+	q := `WITH u AS (
+		UPDATE public.workflow
+		SET starting_discord_events = $2, updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL
+		RETURNING *
+	), sn AS (
+		SELECT COALESCE(ARRAY_AGG(wsn.node_id), ARRAY[]::uuid[]) AS starting_nodes_ids
+		FROM public.workflow_starting_node wsn
+		WHERE wsn.workflow_id = $1
+	), nd AS (
+		SELECT json_agg(n ORDER BY n.created_at) AS nodes
+		FROM public.node n
+		WHERE n.workflow_id = $1 AND n.deleted_at IS NULL
+	)
+	SELECT u.*, sn.starting_nodes_ids, COALESCE(nd.nodes, '[]'::json) AS nodes
+	FROM u
+	LEFT JOIN sn ON true
+	LEFT JOIN nd ON true;`
+
+	err = w.postgresDatabaseService.Get(&updated, q, workflowID, startingDiscordEvents)
+	if err != nil {
+		return models.Workflow{}, err
+	}
+
 	return
 }
 

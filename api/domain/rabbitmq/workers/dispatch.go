@@ -58,7 +58,7 @@ func (w *DispatchWorker) HandleMessage(msg rabbitmq.AMQPMessage) error {
 		return nil
 	}
 
-	for _, nodeID := range *workflow.StartingNodesIDs {
+	for _, nodeID := range workflow.StartingNodesIDs {
 		msg.Body.DiscordEvent.NodeIDToExecute = nodeID
 		err = w.publisherService.Publish(rabbitmq.RoutingKeyNodeExecute, msg.Body)
 		if err != nil {

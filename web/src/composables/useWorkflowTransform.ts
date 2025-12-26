@@ -1,10 +1,4 @@
-import type {
-  Workflow,
-  Node,
-  VueFlowNode,
-  VueFlowEdge,
-  ValidationResult,
-} from '@/types/workflow'
+import type { Workflow, Node, VueFlowNode, VueFlowEdge, ValidationResult } from '@/types/workflow'
 
 const NODE_WIDTH = 300
 const NODE_HEIGHT = 150
@@ -83,6 +77,36 @@ export function useWorkflowTransform() {
         processedNodes.add(currentNodeId)
         currentNodeId = node.next_node_id
         depth++
+      }
+    })
+
+    // Add any remaining nodes that weren't processed (orphaned nodes)
+    workflowNodes.forEach((node, index) => {
+      if (!processedNodes.has(node.id)) {
+        console.log('Adding orphaned node:', node.id)
+        vueFlowNodes.push({
+          id: node.id,
+          type: node.type,
+          position: {
+            x: Math.floor(index / 3) * HORIZONTAL_SPACING + 500,
+            y: (index % 3) * VERTICAL_SPACING + 400,
+          },
+          data: {
+            nodeType: node.type,
+            nodeId: node.id,
+          },
+        })
+
+        // Create edge to next node if it exists
+        if (node.next_node_id) {
+          vueFlowEdges.push({
+            id: `${node.id}-${node.next_node_id}`,
+            source: node.id,
+            target: node.next_node_id,
+          })
+        }
+
+        processedNodes.add(node.id)
       }
     })
 
