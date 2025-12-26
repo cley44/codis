@@ -1,6 +1,7 @@
 package discordHandler
 
 import (
+	discordHandlerRole "codis/domain/discord/handlers/role"
 	"codis/domain/rabbitmq"
 	"codis/models"
 
@@ -15,7 +16,8 @@ func NewNodeHandlerService(injector do.Injector) (*NodeHandlerService, error) {
 	handlerMap := make(map[models.DiscordNodeType]rabbitmq.NodeHandler)
 
 	handlers := []rabbitmq.NodeHandler{
-		do.MustInvoke[*HandlerAddMemberRole](injector),
+		do.MustInvoke[*discordHandlerRole.HandlerAddMemberRole](injector),
+		do.MustInvoke[*discordHandlerRole.HandlerRemoveMemberRole](injector),
 		// Add more handlers here
 	}
 

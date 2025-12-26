@@ -1,4 +1,4 @@
-package discordHandler
+package discordHandlerRole
 
 import (
 	"codis/domain/discord"
@@ -28,7 +28,7 @@ func (h *HandlerAddMemberRole) Execute(msg rabbitmq.AMQPMessageBody, node models
 	guildID := msg.DiscordEvent.GuildID
 	userID := msg.DiscordEvent.UserID
 	if node.Data.RoleID == nil {
-		return oops.Errorf("Role ID is null in node data", "node_id", node.ID, "guildID", guildID, "userID", userID)
+		return oops.With("guild_id", guildID).With("user_id", userID).Errorf("Role ID is null in node data")
 	}
 	roleID := *node.Data.RoleID
 	// roleID := "1453810943912972521"

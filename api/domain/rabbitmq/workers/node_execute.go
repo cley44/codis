@@ -63,7 +63,7 @@ func (w *NodeExecuteWorker) HandleMessage(msg rabbitmq.AMQPMessage) error {
 
 	err = handler.Execute(msg.Body, node)
 	if err != nil {
-		return oops.Wrapf(err, "Failed to execute node handler")
+		return oops.With("node_id", node.ID).Wrapf(err, "Failed to execute node handler")
 	}
 
 	if node.NextNodeID != nil {

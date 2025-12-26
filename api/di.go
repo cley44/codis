@@ -5,6 +5,7 @@ import (
 	"codis/domain/auth"
 	"codis/domain/discord"
 	discordHandler "codis/domain/discord/handlers"
+	discordHandlerRole "codis/domain/discord/handlers/role"
 	rabbitmqDomain "codis/domain/rabbitmq"
 	"codis/handlers"
 	handlerAPIAuth "codis/handlers/auth"
@@ -69,7 +70,8 @@ func RegisterRabbitMQ(injector do.Injector) {
 }
 
 func RegisterDiscordHandlers(injector do.Injector) {
-	do.Provide(injector, discordHandler.NewHandlerAddMemberRole)
+	do.Provide(injector, discordHandlerRole.NewHandlerAddMemberRole)
+	do.Provide(injector, discordHandlerRole.NewHandlerRemoveMemberRole)
 	do.Provide(injector, discordHandler.NewNodeHandlerService)
 }
 
