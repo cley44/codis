@@ -25,16 +25,7 @@ func (svc *WorkflowsAPIController) ListWorkflows(ctx *gin.Context) {
 
 // CreateWorkflow handles POST /workflows
 func (svc *WorkflowsAPIController) CreateWorkflow(ctx *gin.Context) {
-	var body struct {
-		StartingNodesIDs      []string                  `json:"starting_nodes_ids"`
-		GuildID               string                    `json:"guild_id" binding:"required"`
-		StartingDiscordEvents []models.DiscordEventType `json:"starting_discord_events"`
-	}
-
-	if err := ctx.BindJSON(&body); err != nil {
-		utils.AbortRequest(ctx, http.StatusBadRequest, err, "Invalid body")
-		return
-	}
+	body := handlers.GetBody(ctx).(*WorkflowsCreateRequest)
 
 	wf, err := svc.workflowRepository.Create(
 		lo.Ternary(body.StartingNodesIDs != nil, body.StartingNodesIDs, []string{}),

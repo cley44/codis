@@ -2,6 +2,12 @@ package handlerAPIWorkflow
 
 import "codis/models"
 
+type WorkflowsCreateRequest struct {
+	StartingNodesIDs      []string                  `json:"starting_nodes_ids"`
+	StartingDiscordEvents []models.DiscordEventType `json:"starting_discord_events"`
+	GuildID               string                    `json:"guild_id" binding:"required"`
+}
+
 type WorkflowsUpdateRequest struct {
 	StartingNodesIDs      []string                  `json:"starting_nodes_ids"`
 	StartingDiscordEvents []models.DiscordEventType `json:"starting_discord_events"`

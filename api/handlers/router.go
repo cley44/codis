@@ -54,7 +54,7 @@ func (svc *APIRouterService) RegisterDiscordRoutes(router *gin.Engine, authRoute
 	workflows := authRouter.Group("/workflows")
 	{
 		workflows.GET("", workflowController.ListWorkflows)
-		workflows.POST("", workflowController.CreateWorkflow)
+		workflows.POST("", middleware.ValidateBodyMiddleware(handlerWorkflow.WorkflowsCreateRequest{}), workflowController.CreateWorkflow)
 		workflows.GET(":workflow_id", workflowController.GetWorkflow)
 		workflows.PUT(":workflow_id", middleware.ValidateBodyMiddleware(handlerWorkflow.WorkflowsUpdateRequest{}), workflowController.UpdateWorkflow)
 		workflows.DELETE(":workflow_id", workflowController.DeleteWorkflow)
