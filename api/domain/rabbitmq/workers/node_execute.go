@@ -66,6 +66,14 @@ func (w *NodeExecuteWorker) HandleMessage(msg rabbitmq.AMQPMessage) error {
 		return oops.Wrapf(err, "Failed to execute node handler")
 	}
 
+	if node.NextNodeID != nil {
+		msg.Body.DiscordEvent.NodeIDToExecute = *node.NextNodeID
+		err = w.publisherService.Publish(rabbitmq.RoutingKeyNodeExecute, msg.Body)
+		if err != nil {
+			return oops.Wrapf(err, "Failed to publish message to node_execute queue")
+		}
+	}
+
 	// Execute node logic here
 
 	// err = w.publisherService.Publish(rabbitmq.RoutingKeyNodeExecute, msg.Body)
