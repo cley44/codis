@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -27,7 +28,7 @@ func (s *PublisherService) Publish(routingKey RoutingKey, msgBody AMQPMessageBod
 	msgBody.EmittedAt = time.Now()
 	msgBody.Type = routingKey
 
-	body, err := serialize(msgBody)
+	body, err := json.Marshal(msgBody)
 	if err != nil {
 		return oops.Wrapf(err, "failed to marshal message")
 	}

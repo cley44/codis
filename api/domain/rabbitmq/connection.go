@@ -20,8 +20,6 @@ type RabbitMQConnectionService struct {
 func NewRabbitMQConnectionService(injector do.Injector) (*RabbitMQConnectionService, error) {
 	cfg := do.MustInvoke[*config.ConfigService](injector)
 
-	initSerializer()
-
 	vhost := cfg.RabbitMQ.VHost
 	if vhost == "" {
 		vhost = "/"

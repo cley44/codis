@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"sync"
 
@@ -128,7 +129,7 @@ func (svc *ConsumerManagerService) consumeMessages(ctx context.Context, done cha
 
 			// Adapt and unmarshal msg to our own message type
 			body := AMQPMessageBody{}
-			if err := unserialize(msg.Body, &body); err != nil {
+			if err := json.Unmarshal(msg.Body, &body); err != nil {
 				slog.Error("Failed to unmarshal message body", "queue", queueName, "error", oops.Wrap(err))
 				return
 			}
